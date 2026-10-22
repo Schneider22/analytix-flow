@@ -1,0 +1,72 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://analytixflow.local/contracts/m5/output.schema.json",
+  "title": "M5 Evaluation Output",
+  "type": "object",
+  "allOf": [
+    { "$ref": "../common/execution-result.schema.json" },
+    {
+      "type": "object",
+      "required": ["module_output"],
+      "properties": {
+        "module_id": { "const": "m5" },
+        "module_output": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["evaluation_report", "model_comparisons", "recommendation", "iteration_decision", "decision_request"],
+          "properties": {
+            "evaluation_report": { "$ref": "../common/artifact-reference.schema.json" },
+            "model_comparisons": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["candidate_id", "metrics", "baseline_comparison", "limitations"],
+                "properties": {
+                  "candidate_id": { "type": "string", "minLength": 1 },
+                  "metrics": { "type": "object" },
+                  "baseline_comparison": { "type": "object" },
+                  "limitations": { "type": "array", "items": { "type": "string" } }
+                }
+              }
+            },
+            "recommendation": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["status", "rationale", "evidence_level"],
+              "properties": {
+                "status": { "type": "string", "enum": ["accept", "iterate", "insufficient_evidence"] },
+                "candidate_id": { "type": "string" },
+                "rationale": { "type": "string", "minLength": 1 },
+                "evidence_level": { "type": "string", "enum": ["high", "medium", "low", "hypothesis", "not_available"] }
+              }
+            },
+            "iteration_decision": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["required", "target_module"],
+              "properties": {
+                "required": { "type": "boolean" },
+                "target_module": { "type": "string", "enum": ["m3", "m4", "none"] },
+                "hypothesis": { "type": "string" },
+                "objective": { "type": "string" },
+                "success_signal": { "type": "string" }
+              }
+            },
+            "decision_request": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["action", "requires_approval"],
+              "properties": {
+                "action": { "type": "string", "enum": ["accept_model", "request_iteration", "record_insufficient_evidence"] },
+                "requires_approval": { "const": true }
+              }
+            }
+          }
+        }
+      }
+    }
+  ],
+  "unevaluatedProperties": false
+}

@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://analytixflow.local/contracts/common/citation.schema.json",
+  "title": "Verifiable Citation",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["citation_id", "source_id", "locator", "evidence_type"],
+  "properties": {
+    "citation_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "source_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "locator": {
+      "type": "string",
+      "minLength": 1
+    },
+    "evidence_type": {
+      "type": "string",
+      "enum": ["technical_documentation", "research", "standard", "project_artifact", "experience_record", "hypothesis"]
+    },
+    "retrieved_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "limitations": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}

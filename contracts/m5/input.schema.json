@@ -1,0 +1,51 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://analytixflow.local/contracts/m5/input.schema.json",
+  "title": "M5 Evaluation Input",
+  "type": "object",
+  "allOf": [
+    { "$ref": "../common/execution-envelope.schema.json" },
+    {
+      "type": "object",
+      "required": ["module_input"],
+      "properties": {
+        "module_id": { "const": "m5" },
+        "module_input": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["candidate_models", "gold_dataset", "baseline", "evaluation_policy", "success_criteria"],
+          "properties": {
+            "candidate_models": {
+              "type": "array",
+              "minItems": 1,
+              "items": { "$ref": "../common/artifact-reference.schema.json" }
+            },
+            "gold_dataset": { "$ref": "../common/artifact-reference.schema.json" },
+            "baseline": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["description", "artifact_or_method"],
+              "properties": {
+                "description": { "type": "string", "minLength": 1 },
+                "artifact_or_method": { "type": "string", "minLength": 1 }
+              }
+            },
+            "evaluation_policy": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["primary_metrics", "secondary_metrics", "validation_strategy"],
+              "properties": {
+                "primary_metrics": { "type": "array", "minItems": 1, "items": { "type": "string" } },
+                "secondary_metrics": { "type": "array", "items": { "type": "string" } },
+                "validation_strategy": { "type": "string", "enum": ["holdout", "cross_validation", "temporal_holdout"] },
+                "bias_checks": { "type": "array", "items": { "type": "string" } }
+              }
+            },
+            "success_criteria": { "type": "array", "minItems": 1, "items": { "type": "string" } }
+          }
+        }
+      }
+    }
+  ],
+  "unevaluatedProperties": false
+}

@@ -1,0 +1,70 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://analytixflow.local/contracts/m3/output.schema.json",
+  "title": "M3 Preparation Output",
+  "type": "object",
+  "allOf": [
+    { "$ref": "../common/execution-result.schema.json" },
+    {
+      "type": "object",
+      "required": ["module_output"],
+      "properties": {
+        "module_id": { "const": "m3" },
+        "module_output": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["silver_dataset", "gold_dataset", "transformation_summary", "quality_report", "lineage"],
+          "properties": {
+            "silver_dataset": { "$ref": "../common/artifact-reference.schema.json" },
+            "gold_dataset": { "$ref": "../common/artifact-reference.schema.json" },
+            "transformation_summary": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["input_rows", "retained_rows", "transformed_rows", "excluded_rows", "exclusion_reasons"],
+              "properties": {
+                "input_rows": { "type": "integer", "minimum": 0 },
+                "retained_rows": { "type": "integer", "minimum": 0 },
+                "transformed_rows": { "type": "integer", "minimum": 0 },
+                "excluded_rows": { "type": "integer", "minimum": 0 },
+                "exclusion_reasons": { "type": "array", "items": { "type": "string" } }
+              }
+            },
+            "quality_report": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["status", "checks", "limitations"],
+              "properties": {
+                "status": { "type": "string", "enum": ["passed", "passed_with_warnings", "blocked"] },
+                "checks": { "type": "array", "items": { "type": "object" } },
+                "limitations": { "type": "array", "items": { "type": "string" } }
+              }
+            },
+            "lineage": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["input_artifact", "output_artifact", "rule_ids"],
+                "properties": {
+                  "input_artifact": { "$ref": "../common/artifact-reference.schema.json" },
+                  "output_artifact": { "$ref": "../common/artifact-reference.schema.json" },
+                  "rule_ids": { "type": "array", "items": { "type": "string" } }
+                }
+              }
+            },
+            "approval_request": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["action", "reason"],
+              "properties": {
+                "action": { "const": "approve_transformations" },
+                "reason": { "type": "string", "minLength": 1 }
+              }
+            }
+          }
+        }
+      }
+    }
+  ],
+  "unevaluatedProperties": false
+}

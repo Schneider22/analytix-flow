@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://analytixflow.local/contracts/m8/input.schema.json",
+  "title": "M8 Dashboard Input",
+  "type": "object",
+  "allOf": [
+    { "$ref": "../common/execution-envelope.schema.json" },
+    {
+      "type": "object",
+      "required": ["module_input"],
+      "properties": {
+        "module_id": { "const": "m8" },
+        "module_input": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["context_artifacts", "result_artifacts", "claim_policy"],
+          "properties": {
+            "context_artifacts": {
+              "type": "array",
+              "items": { "$ref": "../common/artifact-reference.schema.json" }
+            },
+            "result_artifacts": {
+              "type": "array",
+              "items": { "$ref": "../common/artifact-reference.schema.json" }
+            },
+            "claim_policy": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["required_classification", "require_source_reference"],
+              "properties": {
+                "required_classification": { "const": true },
+                "require_source_reference": { "const": true },
+                "allow_hypotheses": { "type": "boolean" }
+              }
+            }
+          }
+        }
+      }
+    }
+  ],
+  "unevaluatedProperties": false
+}

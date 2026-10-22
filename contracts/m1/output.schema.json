@@ -1,0 +1,106 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://analytixflow.local/contracts/m1/output.schema.json",
+  "title": "M1 Business and Architecture Output",
+  "type": "object",
+  "allOf": [
+    { "$ref": "../common/execution-result.schema.json" },
+    {
+      "type": "object",
+      "required": ["module_output"],
+      "properties": {
+        "module_id": { "const": "m1" },
+        "module_output": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["problem_definition", "alternatives", "recommended_alternative_id", "architecture_concept", "decision_request"],
+          "properties": {
+            "problem_definition": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["analytic_problem", "problem_type", "success_criteria", "known_gaps"],
+              "properties": {
+                "analytic_problem": { "type": "string", "minLength": 1 },
+                "problem_type": { "type": "string", "enum": ["classification", "regression", "descriptive", "segmentation", "time_series", "unknown"] },
+                "success_criteria": { "type": "array", "minItems": 1, "items": { "type": "string" } },
+                "known_gaps": { "type": "array", "items": { "type": "string" } }
+              }
+            },
+            "alternatives": {
+              "type": "array",
+              "minItems": 3,
+              "maxItems": 5,
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["alternative_id", "name", "description", "analytic_problem", "rationale", "required_data", "assumptions", "expected_deliverables", "advantages", "limitations", "risks", "complexity", "cost_status", "evidence_level", "adequacy_score", "citations"],
+                "properties": {
+                  "alternative_id": { "type": "string", "minLength": 1 },
+                  "name": { "type": "string", "minLength": 1 },
+                  "description": { "type": "string", "minLength": 1 },
+                  "analytic_problem": { "type": "string", "minLength": 1 },
+                  "rationale": { "type": "string", "minLength": 1 },
+                  "required_data": { "type": "array", "items": { "type": "string" } },
+                  "assumptions": { "type": "array", "items": { "type": "string" } },
+                  "expected_deliverables": { "type": "array", "items": { "type": "string" } },
+                  "advantages": { "type": "array", "items": { "type": "string" } },
+                  "limitations": { "type": "array", "items": { "type": "string" } },
+                  "risks": { "type": "array", "items": { "type": "string" } },
+                  "complexity": { "type": "string", "minLength": 1 },
+                  "cost_status": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": ["status", "basis"],
+                    "properties": {
+                      "status": { "type": "string", "enum": ["known", "estimated", "not_available"] },
+                      "basis": { "type": "string", "minLength": 1 },
+                      "amount": { "type": "number", "minimum": 0 },
+                      "currency": { "type": "string", "minLength": 1 }
+                    }
+                  },
+                  "evidence_level": { "type": "string", "enum": ["high", "medium", "low", "hypothesis", "not_available"] },
+                  "adequacy_score": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": ["value", "scale", "basis"],
+                    "properties": {
+                      "value": { "type": "number" },
+                      "scale": { "type": "string", "minLength": 1 },
+                      "basis": { "type": "string", "minLength": 1 }
+                    }
+                  },
+                  "citations": {
+                    "type": "array",
+                    "items": { "$ref": "../common/citation.schema.json" }
+                  }
+                }
+              }
+            },
+            "recommended_alternative_id": { "type": "string", "minLength": 1 },
+            "architecture_concept": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["components", "data_flow", "constraints"],
+              "properties": {
+                "components": { "type": "array", "items": { "type": "string" } },
+                "data_flow": { "type": "array", "items": { "type": "string" } },
+                "constraints": { "type": "array", "items": { "type": "string" } }
+              }
+            },
+            "decision_request": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["action", "option_ids"],
+              "properties": {
+                "action": { "const": "select_alternative" },
+                "option_ids": { "type": "array", "minItems": 3, "maxItems": 5, "items": { "type": "string" } },
+                "requires_approval": { "const": true }
+              }
+            }
+          }
+        }
+      }
+    }
+  ],
+  "unevaluatedProperties": false
+}

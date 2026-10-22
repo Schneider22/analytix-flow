@@ -1,0 +1,96 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://analytixflow.local/contracts/common/execution-result.schema.json",
+  "title": "Execution Result",
+  "description": "Common output envelope for every AnalytixFlow module.",
+  "type": "object",
+  "required": ["project_id", "execution_id", "module_id", "contract_version", "context_snapshot_id", "correlation_id", "status", "artifacts", "warnings", "errors", "next_actions"],
+  "properties": {
+    "project_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "execution_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "module_id": {
+      "type": "string",
+      "enum": ["m1", "m2", "m3", "m4", "m5", "m6", "m7", "m8"]
+    },
+    "contract_version": {
+      "type": "string",
+      "pattern": "^v[0-9]+(?:\\.[0-9]+){0,2}$"
+    },
+    "context_snapshot_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "correlation_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "status": {
+      "type": "string",
+      "enum": ["succeeded", "awaiting_approval", "rejected", "failed_retryable", "failed_terminal", "superseded"]
+    },
+    "artifacts": {
+      "type": "array",
+      "items": {
+        "$ref": "artifact-reference.schema.json"
+      },
+      "uniqueItems": true
+    },
+    "approval_refs": {
+      "type": "array",
+      "items": {
+        "$ref": "approval-reference.schema.json"
+      },
+      "uniqueItems": true
+    },
+    "warnings": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "errors": {
+      "type": "array",
+      "items": {
+        "$ref": "module-error.schema.json"
+      }
+    },
+    "next_actions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["action", "requires_approval"],
+        "properties": {
+          "action": {
+            "type": "string",
+            "minLength": 1
+          },
+          "requires_approval": {
+            "type": "boolean"
+          },
+          "target_module": {
+            "type": "string",
+            "enum": ["m1", "m2", "m3", "m4", "m5", "m6", "m7", "m8"]
+          },
+          "hypothesis": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "completed_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "output_hash": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    }
+  }
+}

@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://analytixflow.local/contracts/m7/input.schema.json",
+  "title": "M7 Governance Input",
+  "type": "object",
+  "allOf": [
+    { "$ref": "../common/execution-envelope.schema.json" },
+    {
+      "type": "object",
+      "required": ["module_input"],
+      "properties": {
+        "module_id": { "const": "m7" },
+        "module_input": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["project_artifacts", "execution_ids", "operational_policy"],
+          "properties": {
+            "project_artifacts": {
+              "type": "array",
+              "items": { "$ref": "../common/artifact-reference.schema.json" }
+            },
+            "execution_ids": {
+              "type": "array",
+              "items": { "type": "string", "minLength": 1 },
+              "uniqueItems": true
+            },
+            "operational_policy": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["audit_retention_required", "quality_checks", "freshness_checks"],
+              "properties": {
+                "audit_retention_required": { "type": "boolean" },
+                "quality_checks": { "type": "array", "items": { "type": "string" } },
+                "freshness_checks": { "type": "array", "items": { "type": "string" } }
+              }
+            }
+          }
+        }
+      }
+    }
+  ],
+  "unevaluatedProperties": false
+}

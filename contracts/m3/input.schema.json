@@ -1,0 +1,60 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://analytixflow.local/contracts/m3/input.schema.json",
+  "title": "M3 Preparation Input",
+  "type": "object",
+  "allOf": [
+    { "$ref": "../common/execution-envelope.schema.json" },
+    {
+      "type": "object",
+      "required": ["module_input"],
+      "properties": {
+        "module_id": { "const": "m3" },
+        "module_input": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["bronze_artifacts", "transformation_plan", "business_rules", "quality_policy"],
+          "properties": {
+            "bronze_artifacts": {
+              "type": "array",
+              "minItems": 1,
+              "items": { "$ref": "../common/artifact-reference.schema.json" }
+            },
+            "transformation_plan": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["rules"],
+              "properties": {
+                "rules": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": ["rule_id", "action", "reason", "approval_required"],
+                    "properties": {
+                      "rule_id": { "type": "string", "minLength": 1 },
+                      "action": { "type": "string", "minLength": 1 },
+                      "reason": { "type": "string", "minLength": 1 },
+                      "approval_required": { "type": "boolean" }
+                    }
+                  }
+                }
+              }
+            },
+            "business_rules": { "type": "array", "items": { "type": "string" } },
+            "quality_policy": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["required_checks"],
+              "properties": {
+                "required_checks": { "type": "array", "items": { "type": "string" } },
+                "blocking_conditions": { "type": "array", "items": { "type": "string" } }
+              }
+            }
+          }
+        }
+      }
+    }
+  ],
+  "unevaluatedProperties": false
+}

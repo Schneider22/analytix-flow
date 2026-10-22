@@ -1,0 +1,58 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://analytixflow.local/contracts/m7/output.schema.json",
+  "title": "M7 Governance Output",
+  "type": "object",
+  "allOf": [
+    { "$ref": "../common/execution-result.schema.json" },
+    {
+      "type": "object",
+      "required": ["module_output"],
+      "properties": {
+        "module_id": { "const": "m7" },
+        "module_output": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["audit_artifact", "project_state", "operational_indicators", "maintenance_plan"],
+          "properties": {
+            "audit_artifact": { "$ref": "../common/artifact-reference.schema.json" },
+            "project_state": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["current_phase", "module_statuses", "blocked_reasons"],
+              "properties": {
+                "current_phase": { "type": "string", "minLength": 1 },
+                "module_statuses": { "type": "object" },
+                "blocked_reasons": { "type": "array", "items": { "type": "string" } }
+              }
+            },
+            "operational_indicators": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["name", "classification", "value_status"],
+                "properties": {
+                  "name": { "type": "string", "minLength": 1 },
+                  "classification": { "type": "string", "enum": ["measured", "estimated", "hypothesis", "documentary_evidence"] },
+                  "value_status": { "type": "string", "minLength": 1 },
+                  "source_artifact": { "$ref": "../common/artifact-reference.schema.json" }
+                }
+              }
+            },
+            "maintenance_plan": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["procedures", "future_controls"],
+              "properties": {
+                "procedures": { "type": "array", "items": { "type": "string" } },
+                "future_controls": { "type": "array", "items": { "type": "string" } }
+              }
+            }
+          }
+        }
+      }
+    }
+  ],
+  "unevaluatedProperties": false
+}

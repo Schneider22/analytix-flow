@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://analytixflow.local/contracts/common/module-error.schema.json",
+  "title": "Module Error",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["code", "message", "retryable", "recovery_action"],
+  "properties": {
+    "code": {
+      "type": "string",
+      "enum": ["VALIDATION_ERROR", "PRECONDITION_FAILED", "DATA_QUALITY_BLOCKED", "APPROVAL_REQUIRED", "SECURITY_POLICY_DENIED", "COST_APPROVAL_REQUIRED", "EXECUTION_RETRYABLE", "EXECUTION_TERMINAL", "PROVIDER_UNAVAILABLE"]
+    },
+    "message": {
+      "type": "string",
+      "minLength": 1
+    },
+    "retryable": {
+      "type": "boolean"
+    },
+    "recovery_action": {
+      "type": "string",
+      "minLength": 1
+    },
+    "details": {
+      "type": "object"
+    }
+  }
+}

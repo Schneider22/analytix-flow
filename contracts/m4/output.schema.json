@@ -1,0 +1,56 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://analytixflow.local/contracts/m4/output.schema.json",
+  "title": "M4 Modeling Output",
+  "type": "object",
+  "allOf": [
+    { "$ref": "../common/execution-result.schema.json" },
+    {
+      "type": "object",
+      "required": ["module_output"],
+      "properties": {
+        "module_id": { "const": "m4" },
+        "module_output": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["experiment_artifacts", "candidates", "selection_request"],
+          "properties": {
+            "experiment_artifacts": {
+              "type": "array",
+              "minItems": 1,
+              "items": { "$ref": "../common/artifact-reference.schema.json" }
+            },
+            "candidates": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["candidate_id", "technique", "pipeline_artifact", "parameter_artifact", "preliminary_results", "limitations"],
+                "properties": {
+                  "candidate_id": { "type": "string", "minLength": 1 },
+                  "technique": { "type": "string", "minLength": 1 },
+                  "pipeline_artifact": { "$ref": "../common/artifact-reference.schema.json" },
+                  "parameter_artifact": { "$ref": "../common/artifact-reference.schema.json" },
+                  "preliminary_results": { "type": "object" },
+                  "limitations": { "type": "array", "items": { "type": "string" } }
+                }
+              }
+            },
+            "selection_request": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["action", "candidate_ids", "requires_approval"],
+              "properties": {
+                "action": { "const": "select_model_candidate" },
+                "candidate_ids": { "type": "array", "minItems": 1, "items": { "type": "string" } },
+                "requires_approval": { "const": true }
+              }
+            }
+          }
+        }
+      }
+    }
+  ],
+  "unevaluatedProperties": false
+}

@@ -1,0 +1,71 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://analytixflow.local/contracts/m8/output.schema.json",
+  "title": "M8 Dashboard Output",
+  "type": "object",
+  "allOf": [
+    { "$ref": "../common/execution-result.schema.json" },
+    {
+      "type": "object",
+      "required": ["module_output"],
+      "properties": {
+        "module_id": { "const": "m8" },
+        "module_output": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["dashboard_artifact", "sections", "roadmap"],
+          "properties": {
+            "dashboard_artifact": { "$ref": "../common/artifact-reference.schema.json" },
+            "sections": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["section_id", "title", "claims"],
+                "properties": {
+                  "section_id": { "type": "string", "minLength": 1 },
+                  "title": { "type": "string", "minLength": 1 },
+                  "claims": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": ["claim", "classification", "source_artifacts"],
+                      "properties": {
+                        "claim": { "type": "string", "minLength": 1 },
+                        "classification": { "type": "string", "enum": ["measured", "estimated", "hypothesis", "documentary_evidence"] },
+                        "source_artifacts": {
+                          "type": "array",
+                          "items": { "$ref": "../common/artifact-reference.schema.json" }
+                        },
+                        "citations": {
+                          "type": "array",
+                          "items": { "$ref": "../common/citation.schema.json" }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "roadmap": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["item", "dependencies", "success_signal"],
+                "properties": {
+                  "item": { "type": "string", "minLength": 1 },
+                  "dependencies": { "type": "array", "items": { "type": "string" } },
+                  "success_signal": { "type": "string", "minLength": 1 }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  ],
+  "unevaluatedProperties": false
+}

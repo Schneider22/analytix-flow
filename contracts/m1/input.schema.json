@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://analytixflow.local/contracts/m1/input.schema.json",
+  "title": "M1 Business and Architecture Input",
+  "type": "object",
+  "allOf": [
+    { "$ref": "../common/execution-envelope.schema.json" },
+    {
+      "type": "object",
+      "required": ["module_input"],
+      "properties": {
+        "module_id": { "const": "m1" },
+        "module_input": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["business_context"],
+          "properties": {
+            "business_context": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["company_name", "company_description", "business_need", "expected_objective", "business_rules", "constraints", "success_criteria"],
+              "properties": {
+                "company_name": { "type": "string", "minLength": 1 },
+                "company_description": { "type": "string", "minLength": 1 },
+                "business_need": { "type": "string", "minLength": 1 },
+                "expected_objective": { "type": "string", "minLength": 1 },
+                "business_rules": { "type": "array", "items": { "type": "string" } },
+                "constraints": { "type": "array", "items": { "type": "string" } },
+                "success_criteria": { "type": "array", "minItems": 1, "items": { "type": "string" } },
+                "problem_type_hint": { "type": "string", "enum": ["classification", "regression", "descriptive", "segmentation", "time_series", "unknown"] }
+              }
+            },
+            "rag_request": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "industry": { "type": "string" },
+                "problem_type": { "type": "string" },
+                "topics": { "type": "array", "items": { "type": "string" } },
+                "maximum_sources": { "type": "integer", "minimum": 1 }
+              }
+            }
+          }
+        }
+      }
+    }
+  ],
+  "unevaluatedProperties": false
+}

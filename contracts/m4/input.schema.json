@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://analytixflow.local/contracts/m4/input.schema.json",
+  "title": "M4 Modeling Input",
+  "type": "object",
+  "allOf": [
+    { "$ref": "../common/execution-envelope.schema.json" },
+    {
+      "type": "object",
+      "required": ["module_input"],
+      "properties": {
+        "module_id": { "const": "m4" },
+        "module_input": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["gold_dataset", "problem_definition", "model_policy", "split_policy", "reproducibility"],
+          "properties": {
+            "gold_dataset": { "$ref": "../common/artifact-reference.schema.json" },
+            "problem_definition": { "$ref": "../common/artifact-reference.schema.json" },
+            "target_column": { "type": "string", "minLength": 1 },
+            "model_policy": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["problem_type", "allowed_techniques"],
+              "properties": {
+                "problem_type": { "type": "string", "enum": ["classification", "regression", "descriptive"] },
+                "allowed_techniques": { "type": "array", "items": { "type": "string" } },
+                "interpretability_constraints": { "type": "array", "items": { "type": "string" } }
+              }
+            },
+            "split_policy": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["strategy", "test_fraction"],
+              "properties": {
+                "strategy": { "type": "string", "enum": ["holdout", "cross_validation", "temporal_holdout"] },
+                "test_fraction": { "type": "number", "exclusiveMinimum": 0, "exclusiveMaximum": 1 },
+                "folds": { "type": "integer", "minimum": 2 },
+                "time_column": { "type": "string" }
+              }
+            },
+            "reproducibility": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["random_seed", "record_environment"],
+              "properties": {
+                "random_seed": { "type": "integer" },
+                "record_environment": { "type": "boolean" }
+              }
+            }
+          }
+        }
+      }
+    }
+  ],
+  "unevaluatedProperties": false
+}

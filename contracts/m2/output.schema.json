@@ -1,0 +1,89 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://analytixflow.local/contracts/m2/output.schema.json",
+  "title": "M2 Ingestion Output",
+  "type": "object",
+  "allOf": [
+    { "$ref": "../common/execution-result.schema.json" },
+    {
+      "type": "object",
+      "required": ["module_output"],
+      "properties": {
+        "module_id": { "const": "m2" },
+        "module_output": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["bronze_dataset", "source_manifest", "profile_report", "issues", "recovery_options"],
+          "properties": {
+            "bronze_dataset": { "$ref": "../common/artifact-reference.schema.json" },
+            "source_manifest": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["source_artifact", "preserved", "content_hash"],
+                "properties": {
+                  "source_artifact": { "$ref": "../common/artifact-reference.schema.json" },
+                  "preserved": { "type": "boolean" },
+                  "content_hash": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" },
+                  "metadata": { "type": "object" }
+                }
+              }
+            },
+            "profile_report": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["structures", "row_count", "column_count", "columns", "temporal_coverage", "potential_identifiers"],
+              "properties": {
+                "structures": { "type": "array", "items": { "type": "string" } },
+                "row_count": { "type": "integer", "minimum": 0 },
+                "column_count": { "type": "integer", "minimum": 0 },
+                "columns": { "type": "array", "items": { "type": "object" } },
+                "temporal_coverage": { "type": "object" },
+                "potential_identifiers": { "type": "array", "items": { "type": "string" } }
+              }
+            },
+            "issues": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["issue_id", "severity", "description", "requires_human_decision"],
+                "properties": {
+                  "issue_id": { "type": "string", "minLength": 1 },
+                  "severity": { "type": "string", "enum": ["info", "warning", "blocking"] },
+                  "description": { "type": "string", "minLength": 1 },
+                  "requires_human_decision": { "type": "boolean" }
+                }
+              }
+            },
+            "recovery_options": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["option_id", "description"],
+                "properties": {
+                  "option_id": { "type": "string", "minLength": 1 },
+                  "description": { "type": "string", "minLength": 1 },
+                  "requires_approval": { "type": "boolean" }
+                }
+              }
+            },
+            "approval_request": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["action", "reason"],
+              "properties": {
+                "action": { "const": "approve_ingestion_interpretation" },
+                "reason": { "type": "string", "minLength": 1 }
+              }
+            }
+          }
+        }
+      }
+    }
+  ],
+  "unevaluatedProperties": false
+}

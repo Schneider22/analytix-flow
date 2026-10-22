@@ -1,0 +1,54 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://analytixflow.local/contracts/m6/input.schema.json",
+  "title": "M6 Deployment Input",
+  "type": "object",
+  "allOf": [
+    { "$ref": "../common/execution-envelope.schema.json" },
+    {
+      "type": "object",
+      "required": ["module_input"],
+      "properties": {
+        "module_id": { "const": "m6" },
+        "module_input": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["selected_model", "deployment_target", "api_contract", "runtime_policy"],
+          "properties": {
+            "selected_model": { "$ref": "../common/artifact-reference.schema.json" },
+            "deployment_target": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["target_type", "cloud_execution_allowed"],
+              "properties": {
+                "target_type": { "type": "string", "enum": ["local_process", "docker_artifact", "cloud_plan_only"] },
+                "cloud_execution_allowed": { "const": false },
+                "configuration": { "type": "object" }
+              }
+            },
+            "api_contract": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["operation", "request_schema", "response_schema"],
+              "properties": {
+                "operation": { "type": "string", "minLength": 1 },
+                "request_schema": { "type": "object" },
+                "response_schema": { "type": "object" }
+              }
+            },
+            "runtime_policy": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["network_access", "secret_access"],
+              "properties": {
+                "network_access": { "type": "string", "enum": ["denied", "approved_allowlist"] },
+                "secret_access": { "type": "string", "enum": ["none", "declared_runtime_secrets"] }
+              }
+            }
+          }
+        }
+      }
+    }
+  ],
+  "unevaluatedProperties": false
+}
