@@ -4,7 +4,7 @@
   "title": "Artifact Reference",
   "type": "object",
   "additionalProperties": false,
-  "required": ["artifact_id", "artifact_type", "artifact_version", "content_hash"],
+  "required": ["artifact_id", "artifact_type", "artifact_version", "version_number", "content_hash"],
   "properties": {
     "artifact_id": {
       "type": "string",
@@ -16,7 +16,22 @@
     },
     "artifact_version": {
       "type": "string",
-      "pattern": "^v[0-9]+(?:\\.[0-9]+){0,2}$"
+      "pattern": "^v[1-9][0-9]*$"
+    },
+    "version_number": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "version_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "predecessor_version_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "predecessor_ref": {
+      "$ref": "artifact-reference.schema.json"
     },
     "content_hash": {
       "type": "string",
@@ -38,11 +53,10 @@
       "type": "string",
       "enum": ["m1", "m2", "m3", "m4", "m5", "m6", "m7", "m8", "system", "user"]
     },
-    "parent_artifact_ids": {
+    "parent_artifact_refs": {
       "type": "array",
       "items": {
-        "type": "string",
-        "minLength": 1
+        "$ref": "artifact-reference.schema.json"
       },
       "uniqueItems": true
     },
@@ -50,5 +64,28 @@
       "type": "string",
       "format": "date-time"
     }
-  }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": { "version_number": { "const": 1 } }
+      },
+      "then": {
+        "not": {
+          "anyOf": [
+            { "required": ["predecessor_version_id"] },
+            { "required": ["predecessor_ref"] }
+          ]
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": { "version_number": { "minimum": 2 } }
+      },
+      "then": {
+        "required": ["predecessor_version_id", "predecessor_ref"]
+      }
+    }
+  ]
 }

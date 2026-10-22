@@ -1,6 +1,6 @@
 # Data Model
 
-Status: Proposed for Increment 0
+Status: Expanded during Increment 1; real PostgreSQL validation pending
 
 ## Design goals
 
@@ -37,7 +37,7 @@ Stores module, execution, attempt, contract version, input snapshot, status, ide
 
 ### Artifact
 
-Stores artifact type, logical identity, version, content hash, media type, local URI, producer module, source execution, parent artifacts, classification and creation metadata. Artifact content is immutable.
+Stores artifact type, logical identity, canonical numeric version (`v1`, `v2`, ...), content hash, media type, local URI, producer module, source execution, parent artifacts, the physical version identifier and creation metadata. Artifact content is immutable. Version one has no predecessor. Every later version stores a server-selected predecessor physical identifier and the predecessor version number.
 
 ### Decision
 
@@ -85,6 +85,7 @@ Project 1---N Approval
 Project 1---N Artifact
 ModuleRun 1---N Artifact
 Artifact N---N Artifact       (parent/derived lineage)
+Artifact 1---N Artifact       (mandatory predecessor chain for v2+)
 Artifact 1---N DatasetVersion
 DatasetVersion 1---N Transformation
 Experiment N---1 DatasetVersion
@@ -100,11 +101,15 @@ Project 1---N OperationalEvent
 ## Versioning rules
 
 1. Existing artifact versions are never mutated.
-2. A new transformation or interpretation creates a new dataset version.
-3. Context snapshots are append-only and identify their predecessor.
-4. Contract changes require a new `contract_version`.
-5. A decision change creates a new decision or iteration record.
-6. All derived artifacts retain parent references and content hashes.
+2. The first version of a logical artifact is `v1` and has no predecessor.
+3. The server creates `vN` only when `vN-1` exists for the same project and logical identity; the database enforces uniqueness for `(project_id, logical_id, version_number)`, while the composite foreign key and checks enforce that relationship.
+4. Clients cannot select or replace the predecessor. A version gap, cross-project reference, cross-identity reference, self-reference or inconsistent predecessor is rejected.
+5. Historical rows created before the chain migration are marked as legacy because their predecessor relationship cannot be inferred without inventing data. A legacy logical identity cannot be extended until an explicit compatibility migration is approved.
+6. A new transformation or interpretation creates a new dataset version.
+7. Context snapshots are append-only and identify their predecessor.
+8. Contract changes require a new `contract_version`.
+9. A decision change creates a new decision or iteration record.
+10. All derived artifacts retain parent references and content hashes.
 
 ## Audit requirements
 

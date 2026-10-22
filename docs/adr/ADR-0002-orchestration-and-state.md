@@ -54,7 +54,7 @@ An approval is not a credential. It records user intent; authorization and permi
 
 ## Retry and idempotency
 
-Each execution has an idempotency key and correlation identifier. A worker claims a pending execution using a durable database lock. Reprocessing the same key must return the existing execution result or a clearly recorded retry attempt. Artifact creation uses content hashes and unique version relationships to prevent silent duplication.
+Each execution has an idempotency key and correlation identifier. A worker claims a pending execution using a durable database lock. Reprocessing the same key must return the existing execution result or a clearly recorded retry attempt. Artifact creation uses content hashes, server-derived predecessor chains and unique version relationships to prevent silent duplication or version gaps.
 
 ## Consequences
 

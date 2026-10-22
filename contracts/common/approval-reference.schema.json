@@ -4,7 +4,7 @@
   "title": "Approval Reference",
   "type": "object",
   "additionalProperties": false,
-  "required": ["approval_id", "action", "status", "scope_hash"],
+  "required": ["approval_id", "action", "scope_type", "status", "scope_hash"],
   "properties": {
     "approval_id": {
       "type": "string",
@@ -13,6 +13,10 @@
     "action": {
       "type": "string",
       "minLength": 1
+    },
+    "scope_type": {
+      "type": "string",
+      "enum": ["project", "artifact", "execution"]
     },
     "status": {
       "type": "string",
@@ -28,7 +32,15 @@
     },
     "artifact_version": {
       "type": "string",
-      "pattern": "^v[0-9]+(?:\\.[0-9]+){0,2}$"
+      "pattern": "^v[1-9][0-9]*$"
+    },
+    "execution_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "decision_id": {
+      "type": "string",
+      "minLength": 1
     },
     "approved_by": {
       "type": "string",
@@ -42,5 +54,38 @@
       "type": "string",
       "minLength": 1
     }
-  }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": { "scope_type": { "const": "project" } }
+      },
+      "then": {
+        "not": {
+          "anyOf": [
+            { "required": ["artifact_id"] },
+            { "required": ["artifact_version"] },
+            { "required": ["execution_id"] },
+            { "required": ["decision_id"] }
+          ]
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": { "scope_type": { "const": "artifact" } }
+      },
+      "then": {
+        "required": ["artifact_id", "artifact_version"]
+      }
+    },
+    {
+      "if": {
+        "properties": { "scope_type": { "const": "execution" } }
+      },
+      "then": {
+        "required": ["execution_id"]
+      }
+    }
+  ]
 }

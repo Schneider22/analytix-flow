@@ -1,0 +1,17 @@
+.env
+.env.*
+!.env.example
+.local/
+*.db
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.pytest-tmp/
+pytest-cache-files-*/
+backend/.test-runs/
+backend/.artifact-store-test-runs/
+.artifact-store-test-runs/
+.coverage
+htmlcov/
+.venv/
+venv/

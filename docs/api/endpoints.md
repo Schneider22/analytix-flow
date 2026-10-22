@@ -1,0 +1,68 @@
+# Increment 1 API Inventory
+
+Base path: `/api/v1`
+
+## Health
+
+| Method | Path | Purpose |
+|---|---|---|
+| GET | `/health` | Checks API and database connectivity. |
+
+## Projects
+
+| Method | Path | Purpose |
+|---|---|---|
+| POST | `/projects` | Creates a project. |
+| GET | `/projects` | Lists projects with `limit` and `offset`. |
+| GET | `/projects/{project_id}` | Retrieves one project. |
+
+## Context snapshots
+
+| Method | Path | Purpose |
+|---|---|---|
+| POST | `/projects/{project_id}/context` | Creates the next immutable context version. |
+| GET | `/projects/{project_id}/context` | Lists context versions in ascending order. |
+
+## Decisions
+
+| Method | Path | Purpose |
+|---|---|---|
+| POST | `/projects/{project_id}/decisions` | Records a decision or pending decision. |
+| GET | `/projects/{project_id}/decisions` | Lists project decisions. |
+
+## Artifacts
+
+| Method | Path | Purpose |
+|---|---|---|
+| POST | `/projects/{project_id}/artifacts/content` | Stores raw bytes locally, calculates the server-side hash and registers the artifact version. |
+| POST | `/projects/{project_id}/artifacts` | Registers metadata for bytes already stored by the server; `storage_id` is required and the hash is verified. |
+| GET | `/projects/{project_id}/artifacts` | Lists artifact metadata. |
+
+`artifact_id` is the logical artifact identity. `version_id` is the server-side physical row identifier for one immutable version. New versions use `vN`: the first is `v1`, and the server automatically links each later version to the immediately previous version of the same project and identity. A repeated logical identity cannot skip a version or supply its own predecessor.
+
+Historical rows created before the chain migration are returned with `legacy_version: true` and a null `version_number`; they remain readable but cannot be extended through the strict versioning endpoint.
+
+## Approvals
+
+| Method | Path | Purpose |
+|---|---|---|
+| POST | `/projects/{project_id}/approvals` | Creates a pending approval with a project, artifact or execution scope. The server calculates `scope_hash`. |
+| GET | `/projects/{project_id}/approvals` | Lists approvals. |
+| POST | `/projects/{project_id}/approvals/{approval_id}/resolve` | Resolves a pending approval as approved or rejected. |
+
+## Audit
+
+| Method | Path | Purpose |
+|---|---|---|
+| GET | `/projects/{project_id}/audit` | Lists append-only audit events for a project. |
+
+## Error behavior
+
+- `404`: project, artifact or approval does not exist in the requested project scope.
+- `409`: an approval was already resolved or an artifact identifier is duplicated.
+- `422`: request validation or domain validation failed.
+- `503`: persistence is unavailable; internal database details are not returned.
+
+Mutating requests may send `X-Correlation-ID`. The value is returned in the response and persisted in audit events. Artifact content requests are limited by `MAX_ARTIFACT_BYTES`; metadata is limited by `MAX_METADATA_BYTES`.
+
+Enterprise authentication, complete multi-user authorization and orchestration commands are intentionally outside this increment.

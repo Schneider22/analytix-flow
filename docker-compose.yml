@@ -1,0 +1,35 @@
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-analytixflow}
+      POSTGRES_USER: ${POSTGRES_USER:-analytixflow}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change-me-local-only}
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - analytixflow_postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build:
+      context: ./backend
+    environment:
+      APP_ENV: development
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-analytixflow}:${POSTGRES_PASSWORD:-change-me-local-only}@db:5432/${POSTGRES_DB:-analytixflow}
+      ARTIFACT_STORE_PATH: /var/lib/analytixflow/artifacts
+    ports:
+      - "127.0.0.1:8000:8000"
+    volumes:
+      - analytixflow_artifacts:/var/lib/analytixflow/artifacts
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  analytixflow_postgres:
+  analytixflow_artifacts:

@@ -22,7 +22,7 @@ The minimum role model is:
 - `reviewer`: reviews evidence and approves or rejects scoped actions.
 - `operator`: runs permitted local operations but cannot approve business or deployment decisions by default.
 
-An approval must identify the action, execution, artifact identifier, artifact version and scope hash. An interface approval does not grant credentials or cloud permissions. Cost-bearing, external-data, credential and deployment actions require a dedicated approval gate.
+An approval must identify the action, a typed scope (`project`, `artifact` or `execution`) and a server-derived scope hash. Artifact scope requires the logical artifact identifier and exact artifact version; execution scope requires the execution identifier; project scope contains neither. An interface approval does not grant credentials or cloud permissions. Cost-bearing, external-data, credential and deployment actions require a dedicated approval gate.
 
 ## File and dataset controls
 
