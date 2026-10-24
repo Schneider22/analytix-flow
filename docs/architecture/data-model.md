@@ -1,6 +1,6 @@
 # Data Model
 
-Status: Expanded during Increment 1; real PostgreSQL validation pending
+Status: Expanded during Increment 1; validated against isolated PostgreSQL in Docker
 
 ## Design goals
 
@@ -12,8 +12,9 @@ The data model must preserve project history, make artifacts addressable by immu
 - `execution_id`: one attempted execution of one module.
 - `module_id`: one of `m1` through `m8`.
 - `context_snapshot_id`: immutable snapshot of the project context.
-- `artifact_id`: logical artifact identity.
-- `artifact_version`: immutable version of an artifact.
+- `artifact_id`/`logical_id`: logical artifact identity at the API/database boundary.
+- `Artifact.id`: immutable physical row identifier for one artifact version.
+- `artifact_version`: immutable human-readable version label.
 - `decision_id`: immutable decision record.
 - `approval_id`: immutable approval or rejection record.
 - `correlation_id`: request and event trace identifier.
@@ -97,6 +98,20 @@ KnowledgeSource 1---N Citation
 Project 1---N AuditEvent
 Project 1---N OperationalEvent
 ```
+
+`project_context_snapshots.predecessor_id` is protected by a composite
+same-project foreign key. Migration `0005_persistence_compatibility_repairs`
+repairs databases that had already recorded `0004` before this constraint and
+the complete PostgreSQL immutability trigger set were present. `artifact_lineage` and `decision_artifact_evidence` store a denormalized
+`project_id` relationship scope. Incremental migration `0004` backfills that
+scope from the existing child artifact or decision and adds composite foreign
+keys so direct PostgreSQL writes cannot mix projects. Approval artifact and
+decision references use the approval's existing `project_id` through the same
+composite-key pattern. The migration aborts before changing schema objects if
+existing cross-project rows are detected. Evidence rows retain their existing
+decision-scoped `ON DELETE CASCADE`; audit events remain independent append-only
+records. The compatibility repair also aborts on cross-project or orphaned
+context predecessors before replacing the historical single-column FK.
 
 ## Versioning rules
 

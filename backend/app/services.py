@@ -189,7 +189,13 @@ def create_decision(db: Session, project_id: str, payload, *, correlation_id: st
     )
     decisions.create(db, decision)
     for artifact in evidence:
-        db.add(DecisionArtifactEvidence(decision_id=decision.id, artifact_id=artifact.id))
+        db.add(
+            DecisionArtifactEvidence(
+                project_id=project_id,
+                decision_id=decision.id,
+                artifact_id=artifact.id,
+            )
+        )
     db.flush()
     record_audit(
         db,
@@ -280,7 +286,13 @@ def create_artifact(
     try:
         artifacts.create(db, artifact)
         for parent in parent_artifacts:
-            db.add(ArtifactLineage(child_artifact_id=artifact.id, parent_artifact_id=parent.id))
+            db.add(
+                ArtifactLineage(
+                    project_id=project_id,
+                    child_artifact_id=artifact.id,
+                    parent_artifact_id=parent.id,
+                )
+            )
         db.flush()
     except IntegrityError as exc:
         db.rollback()

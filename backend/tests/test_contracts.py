@@ -55,8 +55,16 @@ def test_contract_json_files_and_local_references_are_valid():
 
 
 def test_contract_schemas_pass_draft_2020_12_meta_validation():
-    validator_module = pytest.importorskip("jsonschema")
-    referencing_module = pytest.importorskip("referencing")
+    try:
+        import jsonschema as validator_module
+        import referencing as referencing_module
+    except ModuleNotFoundError as exc:
+        pytest.fail(
+            "Contract validation requires jsonschema and referencing; "
+            "install backend/requirements.txt before running the suite. "
+            f"Missing module: {exc.name}",
+            pytrace=False,
+        )
     validator = validator_module.Draft202012Validator
     schemas = {}
     for path in CONTRACT_ROOT.rglob("*.json"):

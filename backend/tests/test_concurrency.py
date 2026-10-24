@@ -1,29 +1,35 @@
 from __future__ import annotations
 
-import os
-from tempfile import TemporaryDirectory
 from concurrent.futures import ThreadPoolExecutor
+from tempfile import TemporaryDirectory
 
-import pytest
 from sqlalchemy import select
 from sqlalchemy.orm import Session, sessionmaker
 
-from app.db.base import Base
 from app.db.models import Artifact, Project, ProjectContextSnapshot
-from app.db.session import build_engine
 from app.schemas import ArtifactCreate, ContextCreate
 from app.services import ConflictError, create_artifact, create_context_snapshot
 from app.storage import LocalArtifactStore
-
-
-@pytest.mark.skipif(
-    not os.getenv("ANALYTIXFLOW_TEST_DATABASE_URL"),
-    reason="requires an explicitly isolated PostgreSQL test database",
+from tests.postgres_support import (
+    ALLOWED_CONCURRENCY_DATABASES,
+    CONCURRENCY_DATABASE_URL_ENV,
+    CONCURRENCY_EXPECTED_DATABASE_ENV,
+    DEFAULT_CONCURRENCY_DATABASE,
+    require_migrated_postgres,
 )
+
+
+def _require_concurrency_postgres():
+    return require_migrated_postgres(
+        database_url_env=CONCURRENCY_DATABASE_URL_ENV,
+        expected_database_env=CONCURRENCY_EXPECTED_DATABASE_ENV,
+        default_expected_database=DEFAULT_CONCURRENCY_DATABASE,
+        allowed_databases=ALLOWED_CONCURRENCY_DATABASES,
+    )
+
+
 def test_concurrent_context_versions_are_unique():
-    database_url = os.environ["ANALYTIXFLOW_TEST_DATABASE_URL"]
-    engine = build_engine(database_url)
-    Base.metadata.create_all(engine)
+    engine = _require_concurrency_postgres()
     factory = sessionmaker(bind=engine, autoflush=False, expire_on_commit=False)
     try:
         with factory() as db:
@@ -70,18 +76,15 @@ def test_concurrent_context_versions_are_unique():
             )
             assert versions == [1, 2]
     finally:
-        Base.metadata.drop_all(engine)
+        # Service functions commit independently so worker transactions can
+        # observe the same project. The project id is unique and rows are
+        # intentionally retained in the isolated test database; no automatic
+        # DELETE/TRUNCATE operation may bypass immutability guarantees.
         engine.dispose()
 
 
-@pytest.mark.skipif(
-    not os.getenv("ANALYTIXFLOW_TEST_DATABASE_URL"),
-    reason="requires an explicitly isolated PostgreSQL test database",
-)
 def test_concurrent_artifact_version_creation_is_unique_and_chained():
-    database_url = os.environ["ANALYTIXFLOW_TEST_DATABASE_URL"]
-    engine = build_engine(database_url)
-    Base.metadata.create_all(engine)
+    engine = _require_concurrency_postgres()
     factory = sessionmaker(bind=engine, autoflush=False, expire_on_commit=False)
     try:
         with factory() as db:
@@ -142,5 +145,5 @@ def test_concurrent_artifact_version_creation_is_unique_and_chained():
             assert rows[0].version_number == 1
             assert rows[0].predecessor_artifact_id is None
     finally:
-        Base.metadata.drop_all(engine)
+        # See the isolation note in the context concurrency test above.
         engine.dispose()

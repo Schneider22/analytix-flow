@@ -65,8 +65,44 @@ def _drop_immutability_guards(operation) -> None:
         operation.execute("DROP FUNCTION IF EXISTS analytixflow_reject_artifact_mutation()")
 
 
-def _add_chain_constraints(operation) -> None:
+def _add_chain_constraints(operation, *, batch: bool) -> None:
+    if batch:
+        operation.alter_column(
+            "legacy_version",
+            existing_type=sa.Boolean(),
+            existing_server_default=sa.true(),
+            server_default=sa.false(),
+            nullable=False,
+        )
+        operation.create_unique_constraint(
+            "uq_artifact_identity_version_number",
+            ["id", "project_id", "logical_id", "version_number"],
+        )
+        operation.create_unique_constraint(
+            "uq_artifact_project_logical_version_number",
+            ["project_id", "logical_id", "version_number"],
+        )
+        operation.create_foreign_key(
+            "fk_artifact_predecessor_id",
+            "artifacts",
+            ["predecessor_artifact_id"],
+            ["id"],
+            ondelete="RESTRICT",
+        )
+        operation.create_foreign_key(
+            "fk_artifact_predecessor_same_identity",
+            "artifacts",
+            ["predecessor_artifact_id", "project_id", "logical_id", "predecessor_version_number"],
+            ["id", "project_id", "logical_id", "version_number"],
+            ondelete="RESTRICT",
+        )
+        operation.create_check_constraint("ck_artifact_version_chain_shape", CHAIN_CHECK)
+        operation.create_check_constraint("ck_artifact_version_label_matches_number", LABEL_CHECK)
+        operation.create_check_constraint("ck_artifact_predecessor_not_self", NOT_SELF_CHECK)
+        return
+
     operation.alter_column(
+        "artifacts",
         "legacy_version",
         existing_type=sa.Boolean(),
         existing_server_default=sa.true(),
@@ -75,14 +111,17 @@ def _add_chain_constraints(operation) -> None:
     )
     operation.create_unique_constraint(
         "uq_artifact_identity_version_number",
+        "artifacts",
         ["id", "project_id", "logical_id", "version_number"],
     )
     operation.create_unique_constraint(
         "uq_artifact_project_logical_version_number",
+        "artifacts",
         ["project_id", "logical_id", "version_number"],
     )
     operation.create_foreign_key(
         "fk_artifact_predecessor_id",
+        "artifacts",
         "artifacts",
         ["predecessor_artifact_id"],
         ["id"],
@@ -91,23 +130,31 @@ def _add_chain_constraints(operation) -> None:
     operation.create_foreign_key(
         "fk_artifact_predecessor_same_identity",
         "artifacts",
+        "artifacts",
         ["predecessor_artifact_id", "project_id", "logical_id", "predecessor_version_number"],
         ["id", "project_id", "logical_id", "version_number"],
         ondelete="RESTRICT",
     )
-    operation.create_check_constraint("ck_artifact_version_chain_shape", CHAIN_CHECK)
-    operation.create_check_constraint("ck_artifact_version_label_matches_number", LABEL_CHECK)
-    operation.create_check_constraint("ck_artifact_predecessor_not_self", NOT_SELF_CHECK)
+    operation.create_check_constraint("ck_artifact_version_chain_shape", "artifacts", CHAIN_CHECK)
+    operation.create_check_constraint("ck_artifact_version_label_matches_number", "artifacts", LABEL_CHECK)
+    operation.create_check_constraint("ck_artifact_predecessor_not_self", "artifacts", NOT_SELF_CHECK)
 
 
-def _drop_chain_constraints(operation) -> None:
-    operation.drop_constraint("ck_artifact_predecessor_not_self", type_="check")
-    operation.drop_constraint("ck_artifact_version_label_matches_number", type_="check")
-    operation.drop_constraint("ck_artifact_version_chain_shape", type_="check")
-    operation.drop_constraint("fk_artifact_predecessor_same_identity", type_="foreignkey")
-    operation.drop_constraint("fk_artifact_predecessor_id", type_="foreignkey")
-    operation.drop_constraint("uq_artifact_project_logical_version_number", type_="unique")
-    operation.drop_constraint("uq_artifact_identity_version_number", type_="unique")
+def _drop_chain_constraints(operation, *, batch: bool) -> None:
+    constraints = (
+        ("ck_artifact_predecessor_not_self", "check"),
+        ("ck_artifact_version_label_matches_number", "check"),
+        ("ck_artifact_version_chain_shape", "check"),
+        ("fk_artifact_predecessor_same_identity", "foreignkey"),
+        ("fk_artifact_predecessor_id", "foreignkey"),
+        ("uq_artifact_project_logical_version_number", "unique"),
+        ("uq_artifact_identity_version_number", "unique"),
+    )
+    for name, constraint_type in constraints:
+        if batch:
+            operation.drop_constraint(name, type_=constraint_type)
+        else:
+            operation.drop_constraint(name, "artifacts", type_=constraint_type)
 
 
 def upgrade() -> None:
@@ -128,9 +175,9 @@ def upgrade() -> None:
 
     if op.get_bind().dialect.name == "sqlite":
         with op.batch_alter_table("artifacts", recreate="always") as batch_op:
-            _add_chain_constraints(batch_op)
+            _add_chain_constraints(batch_op, batch=True)
     else:
-        _add_chain_constraints(op)
+        _add_chain_constraints(op, batch=False)
 
     op.create_index(
         "ix_artifacts_predecessor_artifact_id",
@@ -145,14 +192,14 @@ def downgrade() -> None:
     op.drop_index("ix_artifacts_predecessor_artifact_id", table_name="artifacts")
     if op.get_bind().dialect.name == "sqlite":
         with op.batch_alter_table("artifacts", recreate="always") as batch_op:
-            _drop_chain_constraints(batch_op)
+            _drop_chain_constraints(batch_op, batch=True)
             batch_op.drop_column("predecessor_version_number")
             batch_op.drop_column("predecessor_artifact_id")
             batch_op.drop_column("legacy_version")
             batch_op.drop_column("version_number")
     else:
-        _drop_chain_constraints(op)
-        op.drop_column("predecessor_version_number", table_name="artifacts")
-        op.drop_column("predecessor_artifact_id", table_name="artifacts")
-        op.drop_column("legacy_version", table_name="artifacts")
-        op.drop_column("version_number", table_name="artifacts")
+        _drop_chain_constraints(op, batch=False)
+        op.drop_column("artifacts", "predecessor_version_number")
+        op.drop_column("artifacts", "predecessor_artifact_id")
+        op.drop_column("artifacts", "legacy_version")
+        op.drop_column("artifacts", "version_number")

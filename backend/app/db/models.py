@@ -59,14 +59,21 @@ class Project(Base):
 
 class ProjectContextSnapshot(Base):
     __tablename__ = "project_context_snapshots"
-    __table_args__ = (UniqueConstraint("project_id", "version", name="uq_context_project_version"),)
+    __table_args__ = (
+        UniqueConstraint("project_id", "version", name="uq_context_project_version"),
+        UniqueConstraint("id", "project_id", name="uq_context_snapshot_project_scoped_id"),
+        ForeignKeyConstraint(
+            ["predecessor_id", "project_id"],
+            ["project_context_snapshots.id", "project_context_snapshots.project_id"],
+            name="fk_context_snapshot_predecessor_project",
+            ondelete="RESTRICT",
+        ),
+    )
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
     project_id: Mapped[str] = mapped_column(ForeignKey("projects.id", ondelete="RESTRICT"), nullable=False, index=True)
     version: Mapped[int] = mapped_column(nullable=False)
-    predecessor_id: Mapped[str | None] = mapped_column(
-        ForeignKey("project_context_snapshots.id", ondelete="RESTRICT"), nullable=True, index=True
-    )
+    predecessor_id: Mapped[str | None] = mapped_column(String(36), nullable=True, index=True)
     context_data: Mapped[dict[str, Any]] = mapped_column(JSON, nullable=False)
     content_hash: Mapped[str] = mapped_column(String(71), nullable=False)
     created_by: Mapped[str] = mapped_column(String(128), nullable=False)
@@ -74,10 +81,17 @@ class ProjectContextSnapshot(Base):
 
     project: Mapped[Project] = relationship(back_populates="context_snapshots")
     predecessor: Mapped[ProjectContextSnapshot | None] = relationship(
-        "ProjectContextSnapshot", remote_side="ProjectContextSnapshot.id", back_populates="successors"
+        "ProjectContextSnapshot",
+        foreign_keys="[ProjectContextSnapshot.predecessor_id, ProjectContextSnapshot.project_id]",
+        remote_side="[ProjectContextSnapshot.id, ProjectContextSnapshot.project_id]",
+        back_populates="successors",
+        overlaps="project,context_snapshots",
     )
     successors: Mapped[list[ProjectContextSnapshot]] = relationship(
-        "ProjectContextSnapshot", back_populates="predecessor"
+        "ProjectContextSnapshot",
+        foreign_keys="[ProjectContextSnapshot.predecessor_id, ProjectContextSnapshot.project_id]",
+        back_populates="predecessor",
+        overlaps="project,context_snapshots",
     )
 
 
@@ -90,6 +104,9 @@ class Artifact(Base):
         UniqueConstraint(
             "id", "project_id", "logical_id", "version_number",
             name="uq_artifact_identity_version_number",
+        ),
+        UniqueConstraint(
+            "id", "project_id", name="uq_artifact_project_scoped_id"
         ),
         UniqueConstraint(
             "project_id", "logical_id", "version_number",
@@ -173,9 +190,22 @@ class ArtifactLineage(Base):
     __tablename__ = "artifact_lineage"
     __table_args__ = (
         UniqueConstraint("child_artifact_id", "parent_artifact_id", name="uq_artifact_lineage_pair"),
+        ForeignKeyConstraint(
+            ["child_artifact_id", "project_id"],
+            ["artifacts.id", "artifacts.project_id"],
+            name="fk_artifact_lineage_child_project",
+            ondelete="RESTRICT",
+        ),
+        ForeignKeyConstraint(
+            ["parent_artifact_id", "project_id"],
+            ["artifacts.id", "artifacts.project_id"],
+            name="fk_artifact_lineage_parent_project",
+            ondelete="RESTRICT",
+        ),
     )
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    project_id: Mapped[str] = mapped_column(String(36), nullable=False)
     child_artifact_id: Mapped[str] = mapped_column(
         ForeignKey("artifacts.id", ondelete="RESTRICT"), nullable=False, index=True
     )
@@ -193,6 +223,9 @@ class ArtifactLineage(Base):
 
 class Decision(Base):
     __tablename__ = "decisions"
+    __table_args__ = (
+        UniqueConstraint("id", "project_id", name="uq_decision_project_scoped_id"),
+    )
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
     project_id: Mapped[str] = mapped_column(ForeignKey("projects.id", ondelete="RESTRICT"), nullable=False, index=True)
@@ -209,7 +242,10 @@ class Decision(Base):
 
     project: Mapped[Project] = relationship(back_populates="decisions")
     evidence_links: Mapped[list[DecisionArtifactEvidence]] = relationship(
-        "DecisionArtifactEvidence", back_populates="decision", cascade="all, delete-orphan"
+        "DecisionArtifactEvidence",
+        back_populates="decision",
+        cascade="all, delete-orphan",
+        foreign_keys="DecisionArtifactEvidence.decision_id",
     )
 
 
@@ -217,9 +253,22 @@ class DecisionArtifactEvidence(Base):
     __tablename__ = "decision_artifact_evidence"
     __table_args__ = (
         UniqueConstraint("decision_id", "artifact_id", name="uq_decision_artifact_evidence_pair"),
+        ForeignKeyConstraint(
+            ["decision_id", "project_id"],
+            ["decisions.id", "decisions.project_id"],
+            name="fk_decision_evidence_decision_project",
+            ondelete="CASCADE",
+        ),
+        ForeignKeyConstraint(
+            ["artifact_id", "project_id"],
+            ["artifacts.id", "artifacts.project_id"],
+            name="fk_decision_evidence_artifact_project",
+            ondelete="RESTRICT",
+        ),
     )
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    project_id: Mapped[str] = mapped_column(String(36), nullable=False)
     decision_id: Mapped[str] = mapped_column(
         ForeignKey("decisions.id", ondelete="CASCADE"), nullable=False, index=True
     )
@@ -227,8 +276,10 @@ class DecisionArtifactEvidence(Base):
         ForeignKey("artifacts.id", ondelete="RESTRICT"), nullable=False, index=True
     )
 
-    decision: Mapped[Decision] = relationship("Decision", back_populates="evidence_links")
-    artifact: Mapped[Artifact] = relationship("Artifact")
+    decision: Mapped[Decision] = relationship(
+        "Decision", back_populates="evidence_links", foreign_keys=[decision_id]
+    )
+    artifact: Mapped[Artifact] = relationship("Artifact", foreign_keys=[artifact_id])
 
 
 class Approval(Base):
@@ -239,6 +290,18 @@ class Approval(Base):
             "OR (scope_type = 'artifact' AND artifact_id IS NOT NULL AND artifact_version IS NOT NULL) "
             "OR (scope_type = 'execution' AND execution_id IS NOT NULL)",
             name="ck_approval_scope_shape",
+        ),
+        ForeignKeyConstraint(
+            ["artifact_id", "project_id"],
+            ["artifacts.id", "artifacts.project_id"],
+            name="fk_approval_artifact_project",
+            ondelete="RESTRICT",
+        ),
+        ForeignKeyConstraint(
+            ["decision_id", "project_id"],
+            ["decisions.id", "decisions.project_id"],
+            name="fk_approval_decision_project",
+            ondelete="RESTRICT",
         ),
     )
 
@@ -259,8 +322,8 @@ class Approval(Base):
     resolved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
     project: Mapped[Project] = relationship(back_populates="approvals")
-    artifact: Mapped[Artifact | None] = relationship("Artifact")
-    decision: Mapped[Decision | None] = relationship("Decision")
+    artifact: Mapped[Artifact | None] = relationship("Artifact", foreign_keys=[artifact_id])
+    decision: Mapped[Decision | None] = relationship("Decision", foreign_keys=[decision_id])
 
 
 class AuditEvent(Base):
