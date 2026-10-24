@@ -1,6 +1,6 @@
 # MVP Scope
 
-Status: Increment 5 implements the bounded M5 evidence-evaluation boundary; M6 through M8 remain pending.
+Status: Increment 6 implements the bounded local deployment and consumption boundary; M7 and M8 remain pending.
 
 ## Objective
 
@@ -48,6 +48,15 @@ not yet persist exact partition assignments and the current success criteria
 are narrative, M5 reports insufficient evidence and requests human approval;
 it does not retrain, select, deploy or infer effectiveness probabilities.
 
+Increment 6 prepares a project-scoped, immutable local deployment package and
+configuration artifact from an exact M4 model candidate. It requires an
+approved `accept_model` approval, records a new `approve_deployment_action`
+approval request for the exact package, and returns `awaiting_approval`.
+Consumption is limited to hash-verified reads from the local ArtifactStore.
+M6 may read model bytes for integrity verification, but does not deserialize or
+execute model binaries, start processes, build images, create cloud resources
+or invoke paid services.
+
 ### Local consumption and reporting
 
 - Generate a local API or analytical service contract.
@@ -67,6 +76,7 @@ it does not retrain, select, deploy or infer effectiveness probabilities.
 - No invented references, costs or success probabilities.
 - No mandatory support for time-series forecasting, segmentation or deep learning.
 - No complete production monitoring, drift remediation or automated rollback.
+- No execution of a local process, Docker image build or cloud deployment from M6.
 
 ## Assumptions
 
@@ -101,8 +111,9 @@ The MVP scope is considered validated when a test project can:
 7. Execute a suitable tabular or descriptive analytical process.
 8. Compare results with a baseline and record limitations.
 9. Generate local consumption artifacts without cloud side effects.
-10. Display an auditable dashboard distinguishing measured, estimated and hypothetical claims.
-11. Re-run an execution with the same data and configuration when the technique permits reproducibility.
+10. Generate a local, human-gated consumption/deployment package without cloud side effects.
+11. Display an auditable dashboard distinguishing measured, estimated and hypothetical claims.
+12. Re-run an execution with the same data and configuration when the technique permits reproducibility.
 
 ## Evidence policy
 

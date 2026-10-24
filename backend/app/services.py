@@ -30,6 +30,7 @@ from .repositories import (
 from .storage import (
     ArtifactIntegrityError,
     ArtifactNotFoundError,
+    ArtifactStorePathError,
     ArtifactStore,
     StoredArtifact,
 )
@@ -320,7 +321,14 @@ def create_artifact(
     return artifact
 
 
-def create_approval(db: Session, project_id: str, payload, *, correlation_id: str | None = None) -> Approval:
+def create_approval(
+    db: Session,
+    project_id: str,
+    payload,
+    *,
+    correlation_id: str | None = None,
+    commit_transaction: bool = True,
+) -> Approval:
     require_project(db, project_id)
     scope_type = payload.scope_type or _infer_scope_type(payload)
     expected_scope_type = APPROVAL_SCOPE_BY_ACTION.get(payload.action)
@@ -397,7 +405,8 @@ def create_approval(db: Session, project_id: str, payload, *, correlation_id: st
         input_hash=approval.scope_hash,
         metadata={"action": approval.action, "scope_type": approval.scope_type},
     )
-    commit(db)
+    if commit_transaction:
+        commit(db)
     return approval
 
 
@@ -439,7 +448,7 @@ def _verified_storage(
         artifact_store.read(storage_id, expected_hash=expected_hash)
     except ArtifactNotFoundError as exc:
         raise NotFoundError("Stored artifact not found") from exc
-    except ArtifactIntegrityError as exc:
+    except (ArtifactIntegrityError, ArtifactStorePathError) as exc:
         raise ValidationError("Stored artifact integrity validation failed") from exc
     return stored
 

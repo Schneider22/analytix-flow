@@ -403,3 +403,56 @@ class M5EvaluationRequest(StrictModel):
     input_hash: str | None = Field(default=None, pattern=r"^sha256:[a-f0-9]{64}$")
     approval_refs: list[ContractApprovalReference] = Field(min_length=1, max_length=100)
     module_input: M5ModuleInput
+
+
+class M6DeploymentTarget(StrictModel):
+    target_type: Literal["local_process", "docker_artifact", "cloud_plan_only"]
+    cloud_execution_allowed: Literal[False]
+    configuration: dict[str, Any] = Field(default_factory=dict)
+
+
+class M6ApiContract(StrictModel):
+    operation: str = Field(min_length=1)
+    request_schema: dict[str, Any]
+    response_schema: dict[str, Any]
+
+
+class M6RuntimePolicy(StrictModel):
+    network_access: Literal["denied", "approved_allowlist"]
+    secret_access: Literal["none", "declared_runtime_secrets"]
+
+
+class M6ModuleInput(StrictModel):
+    selected_model: ContractArtifactReference
+    deployment_target: M6DeploymentTarget
+    api_contract: M6ApiContract
+    runtime_policy: M6RuntimePolicy
+
+
+class M6DeploymentRequest(StrictModel):
+    project_id: str = Field(min_length=1)
+    execution_id: str = Field(min_length=1, max_length=128)
+    module_id: Literal["m6"]
+    contract_version: Literal["v1.0"]
+    context_snapshot_id: str = Field(min_length=1)
+    artifact_refs: list[ContractArtifactReference] = Field(default_factory=list, max_length=100)
+    status: Literal[
+        "requested",
+        "ready",
+        "running",
+        "awaiting_approval",
+        "succeeded",
+        "rejected",
+        "failed_retryable",
+        "failed_terminal",
+        "superseded",
+    ]
+    warnings: list[str] = Field(default_factory=list)
+    errors: list[dict[str, Any]] = Field(default_factory=list)
+    correlation_id: str = Field(min_length=1, max_length=128)
+    idempotency_key: str = Field(min_length=1, max_length=128)
+    requested_by: str | None = Field(default=None, min_length=1, max_length=128)
+    requested_at: datetime | None = None
+    input_hash: str | None = Field(default=None, pattern=r"^sha256:[a-f0-9]{64}$")
+    approval_refs: list[ContractApprovalReference] = Field(min_length=1, max_length=100)
+    module_input: M6ModuleInput

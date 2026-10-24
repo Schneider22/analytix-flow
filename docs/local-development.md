@@ -121,6 +121,26 @@ approval. No new Alembic migration is required for M4.
 M5 consumes the persisted M4 experiment and candidate artifacts, creates an
 immutable `evaluation.m5` report and waits for human approval. No new Alembic
 migration is required for M5.
+M6 consumes an exact approved M4 model candidate, creates immutable local
+`deployment.package` and `deployment.config` artifacts, and waits for a
+separate artifact-scoped deployment approval. It does not execute a model,
+build a Docker image or create cloud resources. No new Alembic migration is
+required for M6.
+
+The M6 endpoints are:
+
+```text
+POST /api/v1/projects/{project_id}/executions/m6
+GET  /api/v1/projects/{project_id}/artifacts/{artifact_id}/{artifact_version}/content
+```
+
+The request must include the exact physical `version_id` and content hash of
+the selected `model.pipeline`, plus a server-issued approved `accept_model`
+approval reference. The response creates a pending
+`approve_deployment_action` approval for the generated package. The content
+endpoint is project-scoped and re-verifies the ArtifactStore hash on every
+read. `cloud_plan_only` remains informational and always has
+`cloud_execution_allowed: false`.
 
 ### Downgrade data policy
 

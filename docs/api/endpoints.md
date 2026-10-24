@@ -42,6 +42,8 @@ Base path: `/api/v1`
 
 Historical rows created before the chain migration are returned with `legacy_version: true` and a null `version_number`; they remain readable but cannot be extended through the strict versioning endpoint.
 
+| GET | `/projects/{project_id}/artifacts/{artifact_id}/{artifact_version}/content` | Returns project-scoped artifact bytes after server-side hash verification. |
+
 ## M2 ingestion
 
 | Method | Path | Purpose |
@@ -102,6 +104,24 @@ human decision request and can record insufficient evidence or a bounded
 iteration request. Each candidate must include an approved,
 artifact-scoped `select_model_candidate` approval for its exact artifact
 version. It never selects or deploys a model automatically.
+
+## M6 deployment and consumption
+
+| Method | Path | Purpose |
+|---|---|---|
+| POST | `/projects/{project_id}/executions/m6` | Validates an approved M4 candidate and creates immutable local deployment package/configuration artifacts and a plan. |
+| GET | `/projects/{project_id}/artifacts/{artifact_id}/{artifact_version}/content` | Consumes an exact project-scoped artifact version with SHA-256 verification. |
+
+M6 uses contract version `v1.0`. It requires an exact physical model version
+and a server-verified approved `accept_model` approval. The result is
+`awaiting_approval` and creates an artifact-scoped pending
+`approve_deployment_action` approval for the generated package. The MVP only
+prepares local-process or Docker build-context descriptors; a cloud target is
+plan-only, model bytes are read only for hash verification and are not
+deserialized or executed, no process/image/cloud resource is created, and no
+paid provider is called. The content endpoint is a project-scoped,
+hash-verified artifact read; it does not activate or deploy a package, which
+remains behind the exact deployment approval.
 
 ## Audit
 

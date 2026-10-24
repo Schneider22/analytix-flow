@@ -4,7 +4,7 @@ from collections.abc import Generator
 from uuid import uuid4
 
 from fastapi import APIRouter, Depends, FastAPI, Query, Request, status
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, Response
 from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
@@ -36,6 +36,7 @@ from .schemas import (
     M3PreparationRequest,
     M4ModelingRequest,
     M5EvaluationRequest,
+    M6DeploymentRequest,
     ProjectCreate,
     ProjectRead,
 )
@@ -51,7 +52,13 @@ from .services import (
     require_project,
     resolve_approval,
 )
-from .storage import LocalArtifactStore
+from .storage import (
+    ArtifactIntegrityError,
+    ArtifactNotFoundError,
+    ArtifactStorePathError,
+    ArtifactTooLargeError,
+    LocalArtifactStore,
+)
 from .orchestrator import ProjectOrchestrator
 
 
@@ -337,6 +344,38 @@ def create_app(settings: Settings | None = None, *, engine=None, session_factory
         require_project(db, project_id)
         return [_artifact_read(item) for item in artifact_repository.list(db, project_id)]
 
+    @router.get("/projects/{project_id}/artifacts/{artifact_id}/{artifact_version}/content")
+    def read_artifact_content(
+        project_id: str,
+        artifact_id: str,
+        artifact_version: str,
+        request: Request,
+        db: Session = Depends(get_db),
+    ):
+        artifact = artifact_repository.get_by_logical_version(
+            db, project_id, artifact_id, artifact_version
+        )
+        if artifact is None:
+            raise NotFoundError("Artifact version not found for project")
+        try:
+            content = request.app.state.artifact_store.read(
+                artifact.storage_id,
+                expected_hash=artifact.content_hash,
+            )
+        except (ArtifactNotFoundError, ArtifactStorePathError) as exc:
+            raise NotFoundError("Stored artifact not found") from exc
+        except (ArtifactIntegrityError, ArtifactTooLargeError) as exc:
+            raise ValidationError("Stored artifact integrity validation failed") from exc
+        return Response(
+            content=content,
+            media_type=artifact.media_type or "application/octet-stream",
+            headers={
+                "Cache-Control": "no-store",
+                "X-Artifact-Content-Hash": artifact.content_hash,
+                "X-Artifact-Version-ID": artifact.id,
+            },
+        )
+
     @router.post("/projects/{project_id}/executions/m2", response_model=dict)
     def run_m2_endpoint(
         project_id: str,
@@ -390,6 +429,21 @@ def create_app(settings: Settings | None = None, *, engine=None, session_factory
         db: Session = Depends(get_db),
     ):
         return request.app.state.orchestrator.run_m5(
+            db,
+            project_id,
+            payload,
+            request.app.state.artifact_store,
+            max_metadata_bytes=settings.max_metadata_bytes,
+        )
+
+    @router.post("/projects/{project_id}/executions/m6", response_model=dict)
+    def run_m6_endpoint(
+        project_id: str,
+        request: Request,
+        payload: M6DeploymentRequest,
+        db: Session = Depends(get_db),
+    ):
+        return request.app.state.orchestrator.run_m6(
             db,
             project_id,
             payload,

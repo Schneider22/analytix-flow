@@ -1,10 +1,10 @@
 # Solution Architecture
 
-Status: Implemented through Increment 5 for the bounded local MVP path
+Status: Implemented through Increment 6 for the bounded local MVP path
 
 ## Purpose
 
-This document defines the logical architecture for the AnalytixFlow MVP. It converts the product vision in `docs/AnalytixFlow.docx` into explicit boundaries, responsibilities, data flows and control points. Increments 1 through 5 implement only the persistence, ingestion, preparation, bounded modeling and evidence-evaluation slices described below; the remaining modules are architectural boundaries, not completed features.
+This document defines the logical architecture for the AnalytixFlow MVP. It converts the product vision in `docs/AnalytixFlow.docx` into explicit boundaries, responsibilities, data flows and control points. Increments 1 through 6 implement only the persistence, ingestion, preparation, bounded modeling, evidence-evaluation and local deployment/consumption slices described below; the remaining modules are architectural boundaries, not completed features.
 
 ## Architectural principles
 
@@ -108,7 +108,7 @@ RAG is exposed through controlled interfaces for source ingestion, textual retri
 6. M3 proposes and applies approved transformations from its bounded v1.1 action vocabulary to create Silver and Gold artifacts.
 7. M4 creates reproducible candidate pipelines for the selected analytical problem, records preliminary measured metrics and requests approval for candidate selection.
 8. M5 compares candidates against a baseline and either recommends a candidate or creates a bounded iteration request.
-9. M6 produces a local API/package/container artifact and a deployment plan. Cloud execution is not part of the MVP.
+9. M6 validates an approved M4 candidate, produces immutable local package and configuration artifacts, exposes hash-verified artifact consumption and records a deployment plan. It does not execute a process, build an image or create cloud infrastructure.
 10. M7 records governance and operational evidence. M8 exposes a read-oriented dashboard built from approved artifacts.
 
 All transitions and outputs are linked through `project_id`, `execution_id`, artifact identifiers, versions, content hashes and audit events.
@@ -136,6 +136,7 @@ The main flow is iterative. M5 can return to M3 or M4 with a concrete hypothesis
 - The RAG layer may retrieve evidence; it does not approve decisions.
 - The ArtifactStore persists bytes; PostgreSQL persists metadata and relationships.
 - M6 may generate local deployable artifacts; it cannot create cloud infrastructure in the MVP.
+- M6 is plan-only: every deployment action remains behind an exact artifact-scoped human approval.
 
 ## Architectural decisions summarized
 

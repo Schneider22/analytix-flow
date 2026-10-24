@@ -79,7 +79,16 @@ relational table or migration is required.
 
 ### DeploymentPlan
 
-Stores target type, package artifact, configuration artifact, permissions, rollback plan, cost status and required approval. The MVP allows local and Docker artifact targets; cloud plans are informational only.
+M6 represents the deployment plan through an immutable `deployment.package`
+artifact, an immutable `deployment.config` artifact and the existing
+artifact-scoped `approve_deployment_action` approval. The package and config
+are linked to the exact selected `model.pipeline` version through
+`artifact_lineage`; no new relational table is required. The plan records the
+target type, permissions, rollback statement, cost classification and the
+fact that cloud execution is disabled. M6 only prepares descriptors and
+hash-verified local consumption; it may read model bytes for SHA-256
+verification but does not deserialize or execute model binaries, start
+processes, build images or create cloud resources.
 
 ### KnowledgeSource, KnowledgeChunk and Citation
 
@@ -171,3 +180,12 @@ all candidates and the Gold artifact belong to the same project and M4 run,
 persists an immutable evaluation report and returns `awaiting_approval`.
 Metrics remain classified as measured preliminary evidence from M4. The
 module does not retrain, select, deploy or call an external provider.
+
+Increment 6 adds the bounded local deployment and consumption boundary
+without a schema migration. M6 requires a server-verified `accept_model`
+approval for one exact M4 `model.pipeline` version, writes immutable package
+and configuration artifacts, and creates a pending artifact-scoped
+`approve_deployment_action` approval. The result remains
+`awaiting_approval`; consumption uses the existing local ArtifactStore and
+verifies the stored SHA-256 before returning bytes. Docker and cloud targets
+are represented as local plan descriptors only.
