@@ -10,6 +10,7 @@
       "required": ["module_input"],
       "properties": {
         "module_id": { "const": "m3" },
+        "contract_version": { "const": "v1.1" },
         "module_input": {
           "type": "object",
           "additionalProperties": false,
@@ -33,9 +34,35 @@
                     "required": ["rule_id", "action", "reason", "approval_required"],
                     "properties": {
                       "rule_id": { "type": "string", "minLength": 1 },
-                      "action": { "type": "string", "minLength": 1 },
+                      "action": {
+                        "type": "string",
+                        "enum": [
+                          "normalize_column_names",
+                          "drop_duplicate_rows",
+                          "fill_missing_values",
+                          "parse_date_columns",
+                          "drop_empty_rows"
+                        ]
+                      },
                       "reason": { "type": "string", "minLength": 1 },
-                      "approval_required": { "type": "boolean" }
+                      "approval_required": { "type": "boolean" },
+                      "parameters": {
+                        "type": "object",
+                        "additionalProperties": false,
+                        "properties": {
+                          "strategy": {
+                            "type": "string",
+                            "enum": ["zero", "mean", "median", "mode", "constant"]
+                          },
+                          "value": {},
+                          "columns": {
+                            "type": "array",
+                            "uniqueItems": true,
+                            "items": { "type": "string", "minLength": 1 }
+                          },
+                          "keep": { "enum": ["first", "last", false] }
+                        }
+                      }
                     }
                   }
                 }

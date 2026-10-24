@@ -39,7 +39,7 @@ From the `backend` directory, with the project dependencies installed:
 alembic upgrade head
 ```
 
-The current migration head is `0006_m2_ingestion`. The initial migration is intentionally retained unchanged; the correction migrations add artifact storage/version integrity, explicit project-scoped lineage/evidence, typed approval scope, context predecessors and the mandatory server-derived artifact version chain. Migration 0005 repairs databases that already recorded 0004 before the composite context predecessor constraint or the complete PostgreSQL trigger set was present. Migration 0006 adds project-scoped, idempotent module execution records for M2. Historical artifacts are preserved as `legacy_version` when their predecessor cannot be inferred without inventing data.
+The current migration head is `0006_m2_ingestion`. The initial migration is intentionally retained unchanged; the correction migrations add artifact storage/version integrity, explicit project-scoped lineage/evidence, typed approval scope, context predecessors and the mandatory server-derived artifact version chain. Migration 0005 repairs databases that already recorded 0004 before the composite context predecessor constraint or the complete PostgreSQL trigger set was present. Migration 0006 adds project-scoped, idempotent module execution records used by M2 and M3. Increment 3 needs no new migration because it uses the existing execution, artifact and lineage tables. Historical artifacts are preserved as `legacy_version` when their predecessor cannot be inferred without inventing data.
 
 The migration reads `DATABASE_URL` from the environment through `backend/alembic/env.py`.
 
@@ -111,6 +111,10 @@ These commands never target the primary `analytixflow` database for migration
 execution and do not remove volumes or databases. If Docker, PostgreSQL or the
 declared dependencies are unavailable, report the corresponding tests as
 pending rather than substituting SQLite.
+
+M3 is exercised through the same Docker test image and isolated PostgreSQL
+metadata databases. Its source bytes remain in the local ArtifactStore volume;
+the API does not run Alembic automatically at startup.
 
 ### Downgrade data policy
 

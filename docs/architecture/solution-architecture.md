@@ -105,7 +105,7 @@ RAG is exposed through controlled interfaces for source ingestion, textual retri
 3. M1 produces problem, alternative and recommendation artifacts with citations or explicit hypotheses.
 4. The user approves the selected alternative.
 5. M2 ingests CSV or Excel files, preserves the original and creates Bronze metadata and profiling artifacts.
-6. M3 proposes and applies approved transformations to create Silver and Gold artifacts.
+6. M3 proposes and applies approved transformations from its bounded v1.1 action vocabulary to create Silver and Gold artifacts.
 7. M4 creates reproducible candidate pipelines for the selected analytical problem.
 8. M5 compares candidates against a baseline and either recommends a candidate or creates a bounded iteration request.
 9. M6 produces a local API/package/container artifact and a deployment plan. Cloud execution is not part of the MVP.
@@ -146,3 +146,4 @@ The main flow is iterative. M5 can return to M3 or M4 with a concrete hypothesis
 - Local artifact storage is replaceable through an interface.
 - Initial RAG uses a controlled corpus, textual retrieval and verifiable references.
 - All provider integrations are ports, not hard-coded dependencies.
+- M3 transformation semantics are explicit and versioned; free-form actions are rejected rather than interpreted as executable code.

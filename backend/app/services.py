@@ -220,6 +220,7 @@ def create_artifact(
     *,
     max_metadata_bytes: int,
     correlation_id: str | None = None,
+    commit_transaction: bool = True,
 ) -> Artifact:
     project = projects.get_for_update(db, project_id)
     if project is None:
@@ -314,7 +315,8 @@ def create_artifact(
             "storage_id": artifact.storage_id,
         },
     )
-    commit(db)
+    if commit_transaction:
+        commit(db)
     return artifact
 
 

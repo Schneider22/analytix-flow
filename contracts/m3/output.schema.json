@@ -10,10 +10,11 @@
       "required": ["module_output"],
       "properties": {
         "module_id": { "const": "m3" },
+        "contract_version": { "const": "v1.1" },
         "module_output": {
           "type": "object",
           "additionalProperties": false,
-          "required": ["silver_dataset", "gold_dataset", "transformation_summary", "quality_report", "lineage"],
+          "required": ["transformation_summary", "quality_report", "lineage"],
           "properties": {
             "silver_dataset": { "$ref": "../common/artifact-reference.schema.json" },
             "gold_dataset": { "$ref": "../common/artifact-reference.schema.json" },
@@ -61,6 +62,30 @@
                 "reason": { "type": "string", "minLength": 1 }
               }
             }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": { "status": { "const": "succeeded" } }
+      },
+      "then": {
+        "properties": {
+          "module_output": {
+            "required": ["silver_dataset", "gold_dataset"]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": { "status": { "const": "awaiting_approval" } }
+      },
+      "then": {
+        "properties": {
+          "module_output": {
+            "required": ["approval_request"]
           }
         }
       }

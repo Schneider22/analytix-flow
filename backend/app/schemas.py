@@ -224,3 +224,77 @@ class M2IngestionRequest(StrictModel):
     input_hash: str | None = Field(default=None, pattern=r"^sha256:[a-f0-9]{64}$")
     approval_refs: list[dict[str, Any]] = Field(default_factory=list)
     module_input: M2ModuleInput
+
+
+class ContractApprovalReference(StrictModel):
+    approval_id: str = Field(min_length=1, max_length=36)
+    action: str = Field(min_length=1, max_length=128)
+    scope_type: Literal["project", "artifact", "execution"]
+    status: Literal["pending", "approved", "rejected", "revoked"]
+    scope_hash: str = Field(pattern=r"^sha256:[a-f0-9]{64}$")
+    artifact_id: str | None = Field(default=None, min_length=1, max_length=128)
+    artifact_version: str | None = Field(default=None, pattern=r"^v[1-9][0-9]*$")
+    execution_id: str | None = Field(default=None, min_length=1, max_length=128)
+    decision_id: str | None = Field(default=None, min_length=1, max_length=36)
+    approved_by: str | None = Field(default=None, min_length=1, max_length=128)
+    approved_at: datetime | None = None
+    reason: str | None = Field(default=None, min_length=1)
+
+
+class M3TransformationRule(StrictModel):
+    rule_id: str = Field(min_length=1, max_length=128)
+    action: Literal[
+        "normalize_column_names",
+        "drop_duplicate_rows",
+        "fill_missing_values",
+        "parse_date_columns",
+        "drop_empty_rows",
+    ]
+    reason: str = Field(min_length=1, max_length=10000)
+    approval_required: bool
+    parameters: dict[str, Any] = Field(default_factory=dict)
+
+
+class M3TransformationPlan(StrictModel):
+    rules: list[M3TransformationRule] = Field(default_factory=list, max_length=100)
+
+
+class M3QualityPolicy(StrictModel):
+    required_checks: list[str] = Field(default_factory=list, max_length=100)
+    blocking_conditions: list[str] = Field(default_factory=list, max_length=100)
+
+
+class M3ModuleInput(StrictModel):
+    bronze_artifacts: list[ContractArtifactReference] = Field(min_length=1, max_length=100)
+    transformation_plan: M3TransformationPlan
+    business_rules: list[str] = Field(default_factory=list, max_length=100)
+    quality_policy: M3QualityPolicy
+
+
+class M3PreparationRequest(StrictModel):
+    project_id: str = Field(min_length=1)
+    execution_id: str = Field(min_length=1, max_length=128)
+    module_id: Literal["m3"]
+    contract_version: Literal["v1.1"]
+    context_snapshot_id: str = Field(min_length=1)
+    artifact_refs: list[ContractArtifactReference] = Field(default_factory=list)
+    status: Literal[
+        "requested",
+        "ready",
+        "running",
+        "awaiting_approval",
+        "succeeded",
+        "rejected",
+        "failed_retryable",
+        "failed_terminal",
+        "superseded",
+    ]
+    warnings: list[str] = Field(default_factory=list)
+    errors: list[dict[str, Any]] = Field(default_factory=list)
+    correlation_id: str = Field(min_length=1, max_length=128)
+    idempotency_key: str = Field(min_length=1, max_length=128)
+    requested_by: str | None = Field(default=None, min_length=1, max_length=128)
+    requested_at: datetime | None = None
+    input_hash: str | None = Field(default=None, pattern=r"^sha256:[a-f0-9]{64}$")
+    approval_refs: list[ContractApprovalReference] = Field(default_factory=list, max_length=100)
+    module_input: M3ModuleInput

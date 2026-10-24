@@ -1,6 +1,6 @@
 # Data Model
 
-Status: Expanded during Increments 1 and 2; PostgreSQL validation is performed on isolated databases.
+Status: Expanded during Increments 1 through 3; PostgreSQL validation is performed on isolated databases.
 
 ## Design goals
 
@@ -50,7 +50,13 @@ Stores action, subject project, execution, artifact and version, scope hash, app
 
 ### DatasetVersion
 
-The M2 boundary currently represents the Bronze dataset as an immutable versioned artifact containing a canonical ingestion manifest and profile. The original CSV or Excel bytes remain in the source artifact. A dedicated relational `DatasetVersion` entity is deferred until M3 needs Silver and Gold transformation lineage.
+M2 represents the Bronze dataset as an immutable versioned artifact containing
+a canonical ingestion manifest and profile. M3 represents Silver and Gold as
+immutable versioned artifacts with relational `artifact_lineage` edges. The
+original CSV or Excel bytes remain in the source artifact. A dedicated
+relational `DatasetVersion` entity remains deferred because the M3 contract
+does not yet define target-variable, feature-selection or richer dataset
+metadata semantics.
 
 ### Transformation
 
@@ -131,3 +137,8 @@ context predecessors before replacing the historical single-column FK.
 Every module execution must be reconstructible from its input artifact references, context snapshot, contract version, policy, output artifacts, approvals and audit events. The model must retain failed executions and rejected approvals rather than deleting them.
 
 Increment 2 adds the first executable module boundary for M2. The central orchestrator creates one execution record, validates the project-scoped context and source artifacts, invokes only the deterministic ingestion module, and persists the result and audit events. It does not advance M3 automatically.
+
+Increment 3 adds the bounded M3 preparation boundary. The orchestrator validates
+Bronze inputs and approvals, M3 applies only the versioned deterministic action
+vocabulary, and the resulting Silver and Gold artifacts retain project-scoped
+lineage. An awaiting-approval result contains no dataset claims.

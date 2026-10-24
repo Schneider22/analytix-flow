@@ -10,7 +10,7 @@ from sqlalchemy.orm import Session
 from .db.models import Artifact, Execution, ProjectContextSnapshot
 from .domain.hashing import canonical_json, sha256_canonical
 from .repositories import ExecutionRepository
-from .schemas import ArtifactCreate, M2IngestionRequest
+from .schemas import ArtifactCreate, ArtifactReferenceInput, M2IngestionRequest
 from .services import (
     ConflictError,
     NotFoundError,
@@ -139,6 +139,13 @@ class M2IngestionModule:
                 layer="bronze",
                 produced_by_module=self.module_id,
                 source_execution_id=execution.id,
+                parent_artifact_refs=[
+                    ArtifactReferenceInput(
+                        artifact_id=item["source_artifact"]["artifact_id"],
+                        artifact_version=item["source_artifact"]["artifact_version"],
+                    )
+                    for item in profile_result["source_manifest"]
+                ],
                 metadata={
                     "source_count": len(profile_result["source_manifest"]),
                     "profile_status": "failed" if profile_result["errors"] else "complete",
@@ -261,7 +268,11 @@ class M2IngestionModule:
                 "metadata": {
                     "size_bytes": stored.size_bytes,
                     "format": option.format,
+                    "encoding": option.encoding,
+                    "delimiter": option.delimiter,
+                    "header_row": option.header_row,
                     "sheet_name": option.sheet_name,
+                    "date_interpretation": option.date_interpretation,
                 },
             }
             source_manifest.append(manifest_item)

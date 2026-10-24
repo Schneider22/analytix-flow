@@ -1,6 +1,6 @@
 # MVP Scope
 
-Status: Increment 2 implements the M2 ingestion boundary; remaining MVP capabilities are pending.
+Status: Increment 3 implements the bounded M3 preparation boundary; remaining MVP capabilities are pending.
 
 ## Objective
 

@@ -58,6 +58,19 @@ The source bytes must first be registered through `/artifacts/content`. The M2 r
 | GET | `/projects/{project_id}/approvals` | Lists approvals. |
 | POST | `/projects/{project_id}/approvals/{approval_id}/resolve` | Resolves a pending approval as approved or rejected. |
 
+## M3 preparation
+
+| Method | Path | Purpose |
+|---|---|---|
+| POST | `/projects/{project_id}/executions/m3` | Applies the bounded M3 preparation plan to project-scoped Bronze artifacts and creates Silver and Gold artifacts when quality and approval gates pass. |
+
+M3 uses contract version `v1.1`. Supported actions are
+`normalize_column_names`, `drop_duplicate_rows`, `fill_missing_values`,
+`parse_date_columns` and `drop_empty_rows`. A material rule requires an
+approved `approve_transformations` artifact approval for every input Bronze
+version. Before that approval, the response is `awaiting_approval` and does
+not include Silver or Gold artifact references.
+
 ## Audit
 
 | Method | Path | Purpose |

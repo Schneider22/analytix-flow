@@ -33,6 +33,7 @@ from .schemas import (
     DecisionRead,
     HealthRead,
     M2IngestionRequest,
+    M3PreparationRequest,
     ProjectCreate,
     ProjectRead,
 )
@@ -342,6 +343,21 @@ def create_app(settings: Settings | None = None, *, engine=None, session_factory
         db: Session = Depends(get_db),
     ):
         return request.app.state.orchestrator.run_m2(
+            db,
+            project_id,
+            payload,
+            request.app.state.artifact_store,
+            max_metadata_bytes=settings.max_metadata_bytes,
+        )
+
+    @router.post("/projects/{project_id}/executions/m3", response_model=dict)
+    def run_m3_endpoint(
+        project_id: str,
+        request: Request,
+        payload: M3PreparationRequest,
+        db: Session = Depends(get_db),
+    ):
+        return request.app.state.orchestrator.run_m3(
             db,
             project_id,
             payload,
