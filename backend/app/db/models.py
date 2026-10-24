@@ -51,6 +51,7 @@ class Project(Base):
     context_snapshots: Mapped[list[ProjectContextSnapshot]] = relationship(
         back_populates="project", order_by="ProjectContextSnapshot.version"
     )
+    executions: Mapped[list[Execution]] = relationship(back_populates="project")
     artifacts: Mapped[list[Artifact]] = relationship(back_populates="project")
     decisions: Mapped[list[Decision]] = relationship(back_populates="project")
     approvals: Mapped[list[Approval]] = relationship(back_populates="project")
@@ -92,6 +93,54 @@ class ProjectContextSnapshot(Base):
         foreign_keys="[ProjectContextSnapshot.predecessor_id, ProjectContextSnapshot.project_id]",
         back_populates="predecessor",
         overlaps="project,context_snapshots",
+    )
+
+
+class Execution(Base):
+    __tablename__ = "executions"
+    __table_args__ = (
+        UniqueConstraint(
+            "project_id",
+            "module_id",
+            "idempotency_key",
+            name="uq_execution_project_module_idempotency",
+        ),
+        ForeignKeyConstraint(
+            ["context_snapshot_id", "project_id"],
+            ["project_context_snapshots.id", "project_context_snapshots.project_id"],
+            name="fk_execution_context_project",
+            ondelete="RESTRICT",
+        ),
+    )
+
+    id: Mapped[str] = mapped_column(String(128), primary_key=True, default=new_id)
+    project_id: Mapped[str] = mapped_column(
+        ForeignKey("projects.id", ondelete="RESTRICT"), nullable=False, index=True
+    )
+    module_id: Mapped[str] = mapped_column(String(32), nullable=False)
+    contract_version: Mapped[str] = mapped_column(String(32), nullable=False)
+    context_snapshot_id: Mapped[str] = mapped_column(String(36), nullable=False)
+    status: Mapped[str] = mapped_column(String(32), nullable=False)
+    idempotency_key: Mapped[str] = mapped_column(String(128), nullable=False)
+    correlation_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    input_hash: Mapped[str] = mapped_column(String(71), nullable=False)
+    output_hash: Mapped[str | None] = mapped_column(String(71), nullable=True)
+    attempt: Mapped[int] = mapped_column(Integer, nullable=False, default=1, server_default="1")
+    error_summary: Mapped[str | None] = mapped_column(String, nullable=True)
+    result_json: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True)
+    requested_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, default=utc_now)
+    started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+    project: Mapped[Project] = relationship(back_populates="executions")
+    context_snapshot: Mapped[ProjectContextSnapshot] = relationship(
+        "ProjectContextSnapshot",
+        foreign_keys="[Execution.context_snapshot_id, Execution.project_id]",
+        primaryjoin=(
+            "and_(Execution.context_snapshot_id == ProjectContextSnapshot.id, "
+            "Execution.project_id == ProjectContextSnapshot.project_id)"
+        ),
+        overlaps="project,context_snapshots,executions",
     )
 
 

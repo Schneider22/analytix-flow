@@ -1,6 +1,6 @@
 # Data Model
 
-Status: Expanded during Increment 1; validated against isolated PostgreSQL in Docker
+Status: Expanded during Increments 1 and 2; PostgreSQL validation is performed on isolated databases.
 
 ## Design goals
 
@@ -34,7 +34,7 @@ Stores a versioned snapshot of company, business need, objective, business rules
 
 ### ModuleRun
 
-Stores module, execution, attempt, contract version, input snapshot, status, idempotency key, timestamps, error summary and output artifact references.
+The `executions` table is the Increment 2 persistence representation of a module run. It stores module, execution, contract version, input snapshot, status, idempotency key, timestamps, error summary, output hash and the structured result envelope. The unique project/module/idempotency key constraint prevents duplicate M2 work.
 
 ### Artifact
 
@@ -50,7 +50,7 @@ Stores action, subject project, execution, artifact and version, scope hash, app
 
 ### DatasetVersion
 
-Stores source artifact, data layer, schema artifact, profile artifact, row and column summaries, quality status, lineage references and transformation metadata.
+The M2 boundary currently represents the Bronze dataset as an immutable versioned artifact containing a canonical ingestion manifest and profile. The original CSV or Excel bytes remain in the source artifact. A dedicated relational `DatasetVersion` entity is deferred until M3 needs Silver and Gold transformation lineage.
 
 ### Transformation
 
@@ -129,3 +129,5 @@ context predecessors before replacing the historical single-column FK.
 ## Audit requirements
 
 Every module execution must be reconstructible from its input artifact references, context snapshot, contract version, policy, output artifacts, approvals and audit events. The model must retain failed executions and rejected approvals rather than deleting them.
+
+Increment 2 adds the first executable module boundary for M2. The central orchestrator creates one execution record, validates the project-scoped context and source artifacts, invokes only the deterministic ingestion module, and persists the result and audit events. It does not advance M3 automatically.

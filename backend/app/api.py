@@ -32,6 +32,7 @@ from .schemas import (
     DecisionCreate,
     DecisionRead,
     HealthRead,
+    M2IngestionRequest,
     ProjectCreate,
     ProjectRead,
 )
@@ -48,6 +49,7 @@ from .services import (
     resolve_approval,
 )
 from .storage import LocalArtifactStore
+from .orchestrator import ProjectOrchestrator
 
 
 project_repository = ProjectRepository()
@@ -177,6 +179,7 @@ def create_app(settings: Settings | None = None, *, engine=None, session_factory
     app.state.artifact_store = LocalArtifactStore(
         settings.artifact_store_path, max_bytes=settings.max_artifact_bytes
     )
+    app.state.orchestrator = ProjectOrchestrator()
     router = APIRouter(prefix=settings.api_prefix)
 
     @app.middleware("http")
@@ -330,6 +333,21 @@ def create_app(settings: Settings | None = None, *, engine=None, session_factory
     def list_artifacts(project_id: str, db: Session = Depends(get_db)):
         require_project(db, project_id)
         return [_artifact_read(item) for item in artifact_repository.list(db, project_id)]
+
+    @router.post("/projects/{project_id}/executions/m2", response_model=dict)
+    def run_m2_endpoint(
+        project_id: str,
+        request: Request,
+        payload: M2IngestionRequest,
+        db: Session = Depends(get_db),
+    ):
+        return request.app.state.orchestrator.run_m2(
+            db,
+            project_id,
+            payload,
+            request.app.state.artifact_store,
+            max_metadata_bytes=settings.max_metadata_bytes,
+        )
 
     @router.post("/projects/{project_id}/approvals", response_model=ApprovalRead, status_code=status.HTTP_201_CREATED)
     def create_approval_endpoint(

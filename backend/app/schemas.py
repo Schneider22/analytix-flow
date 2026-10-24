@@ -174,3 +174,53 @@ class AuditEventRead(StrictModel):
 class HealthRead(StrictModel):
     status: Literal["ok", "degraded"]
     database: Literal["ok", "unavailable"]
+
+
+class ContractArtifactReference(StrictModel):
+    artifact_id: str = Field(min_length=1, max_length=128)
+    artifact_type: str = Field(min_length=1, max_length=128)
+    artifact_version: str = Field(pattern=r"^v[1-9][0-9]*$")
+    version_number: int = Field(ge=1)
+    version_id: str | None = Field(default=None, min_length=1)
+    predecessor_version_id: str | None = Field(default=None, min_length=1)
+    content_hash: str = Field(pattern=r"^sha256:[a-f0-9]{64}$")
+    uri: str | None = Field(default=None, min_length=1)
+    media_type: str | None = Field(default=None, min_length=1)
+    layer: Literal["source", "bronze", "silver", "gold", "model", "report", "deployment", "audit", "other"] | None = None
+    produced_by_module: str | None = Field(default=None, min_length=1)
+    created_at: datetime | None = None
+
+
+class M2IngestionOption(StrictModel):
+    artifact_id: str = Field(min_length=1, max_length=128)
+    format: Literal["csv", "xlsx", "xls"]
+    encoding: str | None = None
+    delimiter: str | None = Field(default=None, min_length=1, max_length=1)
+    sheet_name: str | None = None
+    header_row: int | None = Field(default=None, ge=0)
+    date_interpretation: str | None = None
+
+
+class M2ModuleInput(StrictModel):
+    selected_alternative_id: str = Field(min_length=1)
+    source_artifacts: list[ContractArtifactReference] = Field(min_length=1)
+    ingestion_options: list[M2IngestionOption] = Field(min_length=1)
+
+
+class M2IngestionRequest(StrictModel):
+    project_id: str = Field(min_length=1)
+    execution_id: str = Field(min_length=1, max_length=128)
+    module_id: Literal["m2"]
+    contract_version: str = Field(pattern=r"^v[0-9]+(?:\.[0-9]+){0,2}$")
+    context_snapshot_id: str = Field(min_length=1)
+    artifact_refs: list[ContractArtifactReference] = Field(default_factory=list)
+    status: Literal["requested", "ready", "running", "awaiting_approval", "succeeded", "rejected", "failed_retryable", "failed_terminal", "superseded"]
+    warnings: list[str] = Field(default_factory=list)
+    errors: list[dict[str, Any]] = Field(default_factory=list)
+    correlation_id: str = Field(min_length=1, max_length=128)
+    idempotency_key: str = Field(min_length=1, max_length=128)
+    requested_by: str | None = Field(default=None, min_length=1, max_length=128)
+    requested_at: datetime | None = None
+    input_hash: str | None = Field(default=None, pattern=r"^sha256:[a-f0-9]{64}$")
+    approval_refs: list[dict[str, Any]] = Field(default_factory=list)
+    module_input: M2ModuleInput

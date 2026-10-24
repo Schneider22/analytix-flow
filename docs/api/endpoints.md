@@ -1,4 +1,4 @@
-# Increment 1 API Inventory
+# Increment 2 API Inventory
 
 Base path: `/api/v1`
 
@@ -41,6 +41,14 @@ Base path: `/api/v1`
 `artifact_id` is the logical artifact identity. `version_id` is the server-side physical row identifier for one immutable version. New versions use `vN`: the first is `v1`, and the server automatically links each later version to the immediately previous version of the same project and identity. A repeated logical identity cannot skip a version or supply its own predecessor.
 
 Historical rows created before the chain migration are returned with `legacy_version: true` and a null `version_number`; they remain readable but cannot be extended through the strict versioning endpoint.
+
+## M2 ingestion
+
+| Method | Path | Purpose |
+|---|---|---|
+| POST | `/projects/{project_id}/executions/m2` | Runs the deterministic CSV/Excel profile for registered source artifacts and creates an immutable Bronze manifest artifact. |
+
+The source bytes must first be registered through `/artifacts/content`. The M2 request references exact artifact versions, a project context snapshot, a contract version and an idempotency key. The server verifies the content hash and project scope, preserves the original bytes, profiles CSV/XLSX/XLS inputs and records warnings, blocking issues and recovery options. M2 never overwrites a source artifact and never invokes M3 directly.
 
 ## Approvals
 

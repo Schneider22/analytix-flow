@@ -39,8 +39,7 @@ From the `backend` directory, with the project dependencies installed:
 alembic upgrade head
 ```
 
-The current migration head is `0005_persistence_compat` (file
-`0005_persistence_compatibility_repairs.py`). The initial migration is intentionally retained unchanged; the correction migrations add artifact storage/version integrity, explicit project-scoped lineage/evidence, typed approval scope, context predecessors and the mandatory server-derived artifact version chain. Migration 0005 repairs databases that already recorded 0004 before the composite context predecessor constraint or the complete PostgreSQL trigger set was present. Historical artifacts are preserved as `legacy_version` when their predecessor cannot be inferred without inventing data.
+The current migration head is `0006_m2_ingestion`. The initial migration is intentionally retained unchanged; the correction migrations add artifact storage/version integrity, explicit project-scoped lineage/evidence, typed approval scope, context predecessors and the mandatory server-derived artifact version chain. Migration 0005 repairs databases that already recorded 0004 before the composite context predecessor constraint or the complete PostgreSQL trigger set was present. Migration 0006 adds project-scoped, idempotent module execution records for M2. Historical artifacts are preserved as `legacy_version` when their predecessor cannot be inferred without inventing data.
 
 The migration reads `DATABASE_URL` from the environment through `backend/alembic/env.py`.
 
@@ -84,7 +83,7 @@ The test database must be created explicitly and separately from `analytixflow`.
 docker compose exec db psql -U analytixflow -d analytixflow -v ON_ERROR_STOP=1 -c "CREATE DATABASE analytixflow_test"
 ```
 
-If it already exists, do not recreate it. Build the backend image after dependency changes, then apply migrations only to the test database by overriding `DATABASE_URL` for the one-off command. `alembic upgrade head` is required even when the database already reports 0004 so that 0005 can inspect and repair its actual constraints and triggers:
+If it already exists, do not recreate it. Build the backend image after dependency changes, then apply migrations only to the test database by overriding `DATABASE_URL` for the one-off command. `alembic upgrade head` is required even when the database already reports 0004 so that 0005 can inspect and repair its actual constraints and triggers and 0006 can create the execution table:
 
 ```text
 docker compose build api
@@ -154,7 +153,7 @@ docker compose run --rm --no-deps -e DATABASE_URL=postgresql+psycopg://analytixf
 docker compose run --rm --no-deps -e DATABASE_URL=postgresql+psycopg://analytixflow:change-me-local-only@db:5432/analytixflow_test api alembic current
 ```
 
-The expected revision is `0005_persistence_compat`. If the
+The expected revision is `0006_m2_ingestion`. If the
 preflight reports cross-project or orphaned context predecessors, stop and
 resolve them through an approved correction or restore; do not delete or
 reassign rows to make the migration pass. The primary `analytixflow` database

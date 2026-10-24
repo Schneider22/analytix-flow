@@ -3,7 +3,7 @@ from __future__ import annotations
 from sqlalchemy import desc, func, select
 from sqlalchemy.orm import Session
 
-from .db.models import Approval, Artifact, AuditEvent, Decision, Project, ProjectContextSnapshot
+from .db.models import Approval, Artifact, AuditEvent, Decision, Execution, Project, ProjectContextSnapshot
 
 
 class ProjectRepository:
@@ -57,6 +57,27 @@ class ContextSnapshotRepository:
                 .order_by(ProjectContextSnapshot.version)
             )
         )
+
+
+class ExecutionRepository:
+    def get(self, db: Session, execution_id: str) -> Execution | None:
+        return db.get(Execution, execution_id)
+
+    def get_by_idempotency(
+        self, db: Session, project_id: str, module_id: str, idempotency_key: str
+    ) -> Execution | None:
+        return db.scalar(
+            select(Execution).where(
+                Execution.project_id == project_id,
+                Execution.module_id == module_id,
+                Execution.idempotency_key == idempotency_key,
+            )
+        )
+
+    def create(self, db: Session, execution: Execution) -> Execution:
+        db.add(execution)
+        db.flush()
+        return execution
 
 
 class ArtifactRepository:

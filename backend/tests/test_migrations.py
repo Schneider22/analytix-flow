@@ -98,6 +98,18 @@ def test_persistence_compatibility_migration_is_incremental_and_non_destructive(
     assert "No business rows are deleted" in text
 
 
+def test_m2_execution_migration_is_incremental_and_project_scoped():
+    migration = pathlib.Path(__file__).parents[1] / "alembic" / "versions" / "0006_m2_ingestion.py"
+    text = migration.read_text(encoding="utf-8")
+    assert migration.is_file()
+    assert 'revision: str = "0006_m2_ingestion"' in text
+    assert 'down_revision: Union[str, None] = "0005_persistence_compat"' in text
+    assert 'op.create_table(\n        "executions"' in text
+    assert "fk_execution_context_project" in text
+    assert "uq_execution_project_module_idempotency" in text
+    assert "op.drop_table(\"executions\")" in text
+
+
 def test_historical_postgresql_downgrades_use_drop_column_table_then_column_signature():
     migration_0002 = pathlib.Path(__file__).parents[1] / "alembic" / "versions" / "0002_integrity_corrections.py"
     text_0002 = migration_0002.read_text(encoding="utf-8")

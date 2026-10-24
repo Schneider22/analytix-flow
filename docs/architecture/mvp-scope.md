@@ -1,6 +1,6 @@
 # MVP Scope
 
-Status: Proposed for Increment 0
+Status: Increment 2 implements the M2 ingestion boundary; remaining MVP capabilities are pending.
 
 ## Objective
 
