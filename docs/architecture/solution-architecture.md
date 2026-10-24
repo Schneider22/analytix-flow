@@ -1,10 +1,10 @@
 # Solution Architecture
 
-Status: Implemented through Increment 4 for the bounded local MVP path
+Status: Implemented through Increment 5 for the bounded local MVP path
 
 ## Purpose
 
-This document defines the logical architecture for the AnalytixFlow MVP. It converts the product vision in `docs/AnalytixFlow.docx` into explicit boundaries, responsibilities, data flows and control points. Increments 1 through 4 implement only the persistence, ingestion, preparation and bounded modeling slices described below; the remaining modules are architectural boundaries, not completed features.
+This document defines the logical architecture for the AnalytixFlow MVP. It converts the product vision in `docs/AnalytixFlow.docx` into explicit boundaries, responsibilities, data flows and control points. Increments 1 through 5 implement only the persistence, ingestion, preparation, bounded modeling and evidence-evaluation slices described below; the remaining modules are architectural boundaries, not completed features.
 
 ## Architectural principles
 
@@ -148,3 +148,6 @@ The main flow is iterative. M5 can return to M3 or M4 with a concrete hypothesis
 - All provider integrations are ports, not hard-coded dependencies.
 - M3 transformation semantics are explicit and versioned; free-form actions are rejected rather than interpreted as executable code.
 - M4 modeling semantics are explicit and versioned; the MVP supports only the documented local scikit-learn techniques and never presents preliminary metrics as business impact or a probability of success.
+- M5 evaluation semantics are evidence-based and versioned; the MVP reuses
+  measured M4 results, persists an immutable report and leaves acceptance or
+  iteration behind explicit human approval.

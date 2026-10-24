@@ -87,6 +87,22 @@ run formal evaluation or deploy anything. The current implementation stores
 scikit-learn pipelines locally as immutable artifacts and records the
 environment when requested by the contract.
 
+## M5 evaluation
+
+| Method | Path | Purpose |
+|---|---|---|
+| POST | `/projects/{project_id}/executions/m5` | Reviews project-scoped M4 candidate evidence against a declared baseline and persists an immutable evaluation report. |
+
+M5 uses contract version `v1.0`. Candidate pipeline references must come from
+the same successful M4 execution as the declared Gold artifact. The module
+reuses measured preliminary metrics and verifies the recorded split policy; it
+does not retrain candidates because M4 did not persist enough partition detail
+for an independent replay. The response is `awaiting_approval`, includes a
+human decision request and can record insufficient evidence or a bounded
+iteration request. Each candidate must include an approved,
+artifact-scoped `select_model_candidate` approval for its exact artifact
+version. It never selects or deploys a model automatically.
+
 ## Audit
 
 | Method | Path | Purpose |

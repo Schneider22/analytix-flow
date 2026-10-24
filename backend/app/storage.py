@@ -48,6 +48,9 @@ class ArtifactStore(Protocol):
     def metadata(self, storage_id: str) -> StoredArtifact:
         """Return verified metadata without loading the content."""
 
+    def delete(self, storage_id: str) -> None:
+        """Remove a staged artifact during compensating cleanup."""
+
 
 class LocalArtifactStore:
     """Filesystem ArtifactStore with atomic writes and integrity sidecars."""
@@ -135,6 +138,12 @@ class LocalArtifactStore:
             size_bytes=len(content),
             uri=self.uri_for(storage_id),
         )
+
+    def delete(self, storage_id: str) -> None:
+        data_path = self._path_for(storage_id)
+        hash_path = self._hash_path_for(storage_id)
+        data_path.unlink(missing_ok=True)
+        hash_path.unlink(missing_ok=True)
 
     def uri_for(self, storage_id: str) -> str:
         self._validate_storage_id(storage_id)

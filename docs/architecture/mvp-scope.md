@@ -1,6 +1,6 @@
 # MVP Scope
 
-Status: Increment 4 implements the bounded M4 modeling boundary; M5 through M8 remain pending.
+Status: Increment 5 implements the bounded M5 evidence-evaluation boundary; M6 through M8 remain pending.
 
 ## Objective
 
@@ -40,6 +40,13 @@ seed. It always emits a baseline for supervised problems, persists candidate
 pipeline and parameter artifacts, and requests human approval before a
 candidate is selected for formal evaluation. Preliminary metrics are measured
 experiment observations, not effectiveness probabilities or business impact.
+
+Increment 5 reviews the measured preliminary evidence emitted by M4. It
+verifies project-scoped references, compares selected candidates with the
+persisted baseline and records an immutable evaluation report. Because M4 does
+not yet persist exact partition assignments and the current success criteria
+are narrative, M5 reports insufficient evidence and requests human approval;
+it does not retrain, select, deploy or infer effectiveness probabilities.
 
 ### Local consumption and reporting
 

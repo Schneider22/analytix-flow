@@ -42,6 +42,16 @@ def test_local_store_detects_corruption(store_dir):
         store.read(stored.storage_id)
 
 
+def test_local_store_deletes_staged_artifact(store_dir):
+    store = LocalArtifactStore(store_dir, max_bytes=1024)
+    stored = store.put(b"staged")
+
+    store.delete(stored.storage_id)
+
+    with pytest.raises(ArtifactNotFoundError):
+        store.read(stored.storage_id)
+
+
 def test_local_store_rejects_missing_and_traversal_ids(store_dir):
     store = LocalArtifactStore(store_dir, max_bytes=1024)
 

@@ -35,6 +35,7 @@ from .schemas import (
     M2IngestionRequest,
     M3PreparationRequest,
     M4ModelingRequest,
+    M5EvaluationRequest,
     ProjectCreate,
     ProjectRead,
 )
@@ -374,6 +375,21 @@ def create_app(settings: Settings | None = None, *, engine=None, session_factory
         db: Session = Depends(get_db),
     ):
         return request.app.state.orchestrator.run_m4(
+            db,
+            project_id,
+            payload,
+            request.app.state.artifact_store,
+            max_metadata_bytes=settings.max_metadata_bytes,
+        )
+
+    @router.post("/projects/{project_id}/executions/m5", response_model=dict)
+    def run_m5_endpoint(
+        project_id: str,
+        request: Request,
+        payload: M5EvaluationRequest,
+        db: Session = Depends(get_db),
+    ):
+        return request.app.state.orchestrator.run_m5(
             db,
             project_id,
             payload,

@@ -1,6 +1,6 @@
 # Data Model
 
-Status: Expanded during Increments 1 through 3; PostgreSQL validation is performed on isolated databases.
+Status: Expanded during Increments 1 through 5; PostgreSQL validation is performed on isolated databases.
 
 ## Design goals
 
@@ -65,6 +65,17 @@ Stores input dataset versions, output dataset version, rule specification, engin
 ### Experiment and ModelCandidate
 
 An experiment stores the problem type, dataset version, split policy, seed, parameter configuration and results artifact. A model candidate stores the pipeline artifact, framework metadata, status and links to evaluations.
+
+### EvaluationReport
+
+M5 stores an immutable `evaluation.m5` artifact in the existing `artifacts`
+table. Its JSON content records the M4 execution and experiment references,
+Gold reference, declared baseline, requested metrics, measured comparisons,
+criteria assessment, reproducibility and leakage-review status, limitations and
+the human decision request. The report is linked through `artifact_lineage` to
+the Gold artifact, the M4 experiment and the evaluated candidate pipeline
+artifacts. M5 reuses `executions`, `artifacts` and `artifact_lineage`; no new
+relational table or migration is required.
 
 ### DeploymentPlan
 
@@ -153,3 +164,10 @@ runs produce a measured profile and no predictive effectiveness claim. The
 `select_model_candidate` approval is requested for the candidate artifact and
 is consumed by a later evaluation increment; M4 does not select or deploy a
 candidate.
+
+Increment 5 adds the bounded M5 evaluation boundary without a schema
+migration. M5 consumes only successful M4 execution evidence, validates that
+all candidates and the Gold artifact belong to the same project and M4 run,
+persists an immutable evaluation report and returns `awaiting_approval`.
+Metrics remain classified as measured preliminary evidence from M4. The
+module does not retrain, select, deploy or call an external provider.

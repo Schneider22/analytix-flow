@@ -354,3 +354,52 @@ class M4ModelingRequest(StrictModel):
     input_hash: str | None = Field(default=None, pattern=r"^sha256:[a-f0-9]{64}$")
     approval_refs: list[ContractApprovalReference] = Field(default_factory=list, max_length=100)
     module_input: M4ModuleInput
+
+
+class M5Baseline(StrictModel):
+    description: str = Field(min_length=1, max_length=10000)
+    artifact_or_method: str = Field(min_length=1, max_length=255)
+
+
+class M5EvaluationPolicy(StrictModel):
+    primary_metrics: list[str] = Field(min_length=1, max_length=50)
+    secondary_metrics: list[str] = Field(default_factory=list, max_length=50)
+    validation_strategy: Literal["holdout", "cross_validation", "temporal_holdout"]
+    bias_checks: list[str] = Field(default_factory=list, max_length=50)
+
+
+class M5ModuleInput(StrictModel):
+    candidate_models: list[ContractArtifactReference] = Field(min_length=1, max_length=100)
+    gold_dataset: ContractArtifactReference
+    baseline: M5Baseline
+    evaluation_policy: M5EvaluationPolicy
+    success_criteria: list[str] = Field(min_length=1, max_length=100)
+
+
+class M5EvaluationRequest(StrictModel):
+    project_id: str = Field(min_length=1)
+    execution_id: str = Field(min_length=1, max_length=128)
+    module_id: Literal["m5"]
+    contract_version: Literal["v1.0"]
+    context_snapshot_id: str = Field(min_length=1)
+    artifact_refs: list[ContractArtifactReference] = Field(default_factory=list, max_length=100)
+    status: Literal[
+        "requested",
+        "ready",
+        "running",
+        "awaiting_approval",
+        "succeeded",
+        "rejected",
+        "failed_retryable",
+        "failed_terminal",
+        "superseded",
+    ]
+    warnings: list[str] = Field(default_factory=list)
+    errors: list[dict[str, Any]] = Field(default_factory=list)
+    correlation_id: str = Field(min_length=1, max_length=128)
+    idempotency_key: str = Field(min_length=1, max_length=128)
+    requested_by: str | None = Field(default=None, min_length=1, max_length=128)
+    requested_at: datetime | None = None
+    input_hash: str | None = Field(default=None, pattern=r"^sha256:[a-f0-9]{64}$")
+    approval_refs: list[ContractApprovalReference] = Field(min_length=1, max_length=100)
+    module_input: M5ModuleInput

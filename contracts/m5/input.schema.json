@@ -7,9 +7,16 @@
     { "$ref": "../common/execution-envelope.schema.json" },
     {
       "type": "object",
-      "required": ["module_input"],
+      "required": ["module_input", "approval_refs"],
       "properties": {
         "module_id": { "const": "m5" },
+        "approval_refs": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 100,
+          "uniqueItems": true,
+          "items": { "$ref": "../common/approval-reference.schema.json" }
+        },
         "module_input": {
           "type": "object",
           "additionalProperties": false,

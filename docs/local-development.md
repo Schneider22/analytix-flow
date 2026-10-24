@@ -112,12 +112,15 @@ execution and do not remove volumes or databases. If Docker, PostgreSQL or the
 declared dependencies are unavailable, report the corresponding tests as
 pending rather than substituting SQLite.
 
-M3 and M4 are exercised through the same Docker test image and isolated PostgreSQL
+M3, M4 and M5 are exercised through the same Docker test image and isolated PostgreSQL
 metadata databases. Its source bytes remain in the local ArtifactStore volume;
 the API does not run Alembic automatically at startup. M4 consumes a project-
 scoped Gold CSV and problem-definition artifact, writes experiment and model
 candidate artifacts, and leaves candidate selection behind an explicit human
 approval. No new Alembic migration is required for M4.
+M5 consumes the persisted M4 experiment and candidate artifacts, creates an
+immutable `evaluation.m5` report and waits for human approval. No new Alembic
+migration is required for M5.
 
 ### Downgrade data policy
 
