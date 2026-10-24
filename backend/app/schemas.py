@@ -298,3 +298,59 @@ class M3PreparationRequest(StrictModel):
     input_hash: str | None = Field(default=None, pattern=r"^sha256:[a-f0-9]{64}$")
     approval_refs: list[ContractApprovalReference] = Field(default_factory=list, max_length=100)
     module_input: M3ModuleInput
+
+
+class M4ModelPolicy(StrictModel):
+    problem_type: Literal["classification", "regression", "descriptive"]
+    allowed_techniques: list[str] = Field(min_length=1, max_length=50)
+    interpretability_constraints: list[str] = Field(default_factory=list, max_length=100)
+
+
+class M4SplitPolicy(StrictModel):
+    strategy: Literal["holdout", "cross_validation", "temporal_holdout"]
+    test_fraction: float = Field(gt=0, lt=1)
+    folds: int | None = Field(default=None, ge=2, le=100)
+    time_column: str | None = Field(default=None, min_length=1, max_length=255)
+
+
+class M4Reproducibility(StrictModel):
+    random_seed: int
+    record_environment: bool
+
+
+class M4ModuleInput(StrictModel):
+    gold_dataset: ContractArtifactReference
+    problem_definition: ContractArtifactReference
+    target_column: str | None = Field(default=None, min_length=1, max_length=255)
+    model_policy: M4ModelPolicy
+    split_policy: M4SplitPolicy
+    reproducibility: M4Reproducibility
+
+
+class M4ModelingRequest(StrictModel):
+    project_id: str = Field(min_length=1)
+    execution_id: str = Field(min_length=1, max_length=128)
+    module_id: Literal["m4"]
+    contract_version: str = Field(pattern=r"^v[0-9]+(?:\.[0-9]+){0,2}$")
+    context_snapshot_id: str = Field(min_length=1)
+    artifact_refs: list[ContractArtifactReference] = Field(default_factory=list)
+    status: Literal[
+        "requested",
+        "ready",
+        "running",
+        "awaiting_approval",
+        "succeeded",
+        "rejected",
+        "failed_retryable",
+        "failed_terminal",
+        "superseded",
+    ]
+    warnings: list[str] = Field(default_factory=list)
+    errors: list[dict[str, Any]] = Field(default_factory=list)
+    correlation_id: str = Field(min_length=1, max_length=128)
+    idempotency_key: str = Field(min_length=1, max_length=128)
+    requested_by: str | None = Field(default=None, min_length=1, max_length=128)
+    requested_at: datetime | None = None
+    input_hash: str | None = Field(default=None, pattern=r"^sha256:[a-f0-9]{64}$")
+    approval_refs: list[ContractApprovalReference] = Field(default_factory=list, max_length=100)
+    module_input: M4ModuleInput

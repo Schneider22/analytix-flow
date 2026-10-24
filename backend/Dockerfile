@@ -5,12 +5,14 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 WORKDIR /app
 
-COPY requirements.txt ./requirements.txt
+COPY backend/requirements.txt ./requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY app ./app
-COPY alembic.ini ./alembic.ini
-COPY alembic ./alembic
+COPY backend/app ./app
+COPY backend/tests ./tests
+COPY backend/alembic.ini ./alembic.ini
+COPY backend/alembic ./alembic
+COPY contracts ./contracts
 
 EXPOSE 8000
 

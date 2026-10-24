@@ -1,6 +1,6 @@
 # MVP Scope
 
-Status: Increment 3 implements the bounded M3 preparation boundary; remaining MVP capabilities are pending.
+Status: Increment 4 implements the bounded M4 modeling boundary; M5 through M8 remain pending.
 
 ## Objective
 
@@ -32,6 +32,14 @@ The MVP must prove one traceable, human-supervised analytical flow from business
 - Build reproducible pipelines with a declared split policy and parameters.
 - Compare candidates against a baseline.
 - Record metrics, limitations, potential bias and operating complexity.
+
+Increment 4 implements a bounded local modeling execution. It supports
+tabular classification, tabular regression and descriptive analytics through
+an explicit technique vocabulary, declared split policy and recorded random
+seed. It always emits a baseline for supervised problems, persists candidate
+pipeline and parameter artifacts, and requests human approval before a
+candidate is selected for formal evaluation. Preliminary metrics are measured
+experiment observations, not effectiveness probabilities or business impact.
 
 ### Local consumption and reporting
 

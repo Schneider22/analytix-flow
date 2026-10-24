@@ -49,6 +49,8 @@ def _m3_request(project, context, bronze, *, execution_id: str, key: str):
 
 def _assert_m3_output_contract(result: dict) -> None:
     contract_root = Path(__file__).parents[2] / "contracts"
+    if not contract_root.is_dir():
+        contract_root = Path(__file__).parents[1] / "contracts"
     schemas = {}
     for path in contract_root.rglob("*.json"):
         schema = json.loads(path.read_text(encoding="utf-8"))

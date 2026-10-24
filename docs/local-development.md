@@ -2,7 +2,7 @@
 
 ## Current prerequisites
 
-The intended runtime uses Python, FastAPI, SQLAlchemy, Alembic, a PostgreSQL driver, PostgreSQL and Docker Compose. Dependencies are declared in `backend/requirements.txt` and are installed by the backend Dockerfile. The contract tests require the declared `jsonschema` and `referencing` packages; missing packages fail the validation test instead of being silently skipped.
+The intended runtime uses Python, FastAPI, SQLAlchemy, Alembic, a PostgreSQL driver, PostgreSQL and Docker Compose. Dependencies are declared in `backend/requirements.txt` and are installed by the backend Dockerfile. M4 additionally requires the declared `pandas` and `scikit-learn` packages. The contract tests require the declared `jsonschema` and `referencing` packages; missing packages fail the validation test instead of being silently skipped.
 
 PostgreSQL is the supported migration and integration-test engine. SQLite is
 used only by the isolated application smoke tests that create the schema from
@@ -112,9 +112,12 @@ execution and do not remove volumes or databases. If Docker, PostgreSQL or the
 declared dependencies are unavailable, report the corresponding tests as
 pending rather than substituting SQLite.
 
-M3 is exercised through the same Docker test image and isolated PostgreSQL
+M3 and M4 are exercised through the same Docker test image and isolated PostgreSQL
 metadata databases. Its source bytes remain in the local ArtifactStore volume;
-the API does not run Alembic automatically at startup.
+the API does not run Alembic automatically at startup. M4 consumes a project-
+scoped Gold CSV and problem-definition artifact, writes experiment and model
+candidate artifacts, and leaves candidate selection behind an explicit human
+approval. No new Alembic migration is required for M4.
 
 ### Downgrade data policy
 

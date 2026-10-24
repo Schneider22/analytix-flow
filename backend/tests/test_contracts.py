@@ -7,6 +7,8 @@ import pytest
 
 
 CONTRACT_ROOT = Path(__file__).parents[2] / "contracts"
+if not CONTRACT_ROOT.is_dir():
+    CONTRACT_ROOT = Path(__file__).parents[1] / "contracts"
 
 
 def _walk_refs(value):

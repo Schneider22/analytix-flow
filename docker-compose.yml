@@ -17,7 +17,8 @@ services:
 
   api:
     build:
-      context: ./backend
+      context: .
+      dockerfile: backend/Dockerfile
     environment:
       APP_ENV: development
       DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-analytixflow}:${POSTGRES_PASSWORD:-change-me-local-only}@db:5432/${POSTGRES_DB:-analytixflow}

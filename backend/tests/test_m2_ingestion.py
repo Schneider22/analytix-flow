@@ -49,6 +49,8 @@ def _m2_request(project, context, source, *, execution_id: str, key: str, fmt: s
 
 def _assert_m2_output_contract(result: dict) -> None:
     contract_root = Path(__file__).parents[2] / "contracts"
+    if not contract_root.is_dir():
+        contract_root = Path(__file__).parents[1] / "contracts"
     schemas = {}
     for path in contract_root.rglob("*.json"):
         schema = json.loads(path.read_text(encoding="utf-8"))

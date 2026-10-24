@@ -71,6 +71,22 @@ approved `approve_transformations` artifact approval for every input Bronze
 version. Before that approval, the response is `awaiting_approval` and does
 not include Silver or Gold artifact references.
 
+## M4 modeling
+
+| Method | Path | Purpose |
+|---|---|---|
+| POST | `/projects/{project_id}/executions/m4` | Runs bounded local modeling over a project-scoped Gold CSV and problem-definition artifact, then creates reproducible candidate artifacts. |
+
+M4 uses contract version `v1.0`. It supports tabular classification,
+regression and descriptive analytics with an explicit local technique
+vocabulary, declared split policy and random seed. Supervised executions
+always include a baseline candidate and report preliminary metrics as measured
+observations. Every successful execution returns a `select_model_candidate`
+next action requiring an artifact-scoped approval; M4 does not select a model,
+run formal evaluation or deploy anything. The current implementation stores
+scikit-learn pipelines locally as immutable artifacts and records the
+environment when requested by the contract.
+
 ## Audit
 
 | Method | Path | Purpose |

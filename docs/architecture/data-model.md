@@ -142,3 +142,14 @@ Increment 3 adds the bounded M3 preparation boundary. The orchestrator validates
 Bronze inputs and approvals, M3 applies only the versioned deterministic action
 vocabulary, and the resulting Silver and Gold artifacts retain project-scoped
 lineage. An awaiting-approval result contains no dataset claims.
+
+Increment 4 adds the bounded M4 modeling boundary without a schema migration.
+M4 stores an experiment specification, one pipeline artifact and one parameter
+artifact per candidate through the existing immutable `artifacts` table and
+`artifact_lineage` relationships. Experiment artifacts retain the Gold dataset
+and problem-definition references. Candidate artifacts retain the experiment
+reference. Supervised runs include a measured baseline comparison; descriptive
+runs produce a measured profile and no predictive effectiveness claim. The
+`select_model_candidate` approval is requested for the candidate artifact and
+is consumed by a later evaluation increment; M4 does not select or deploy a
+candidate.

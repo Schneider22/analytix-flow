@@ -1,10 +1,10 @@
 # Solution Architecture
 
-Status: Proposed for Increment 0
+Status: Implemented through Increment 4 for the bounded local MVP path
 
 ## Purpose
 
-This document defines the logical architecture for the AnalytixFlow MVP. It converts the product vision in `docs/AnalytixFlow.docx` into explicit boundaries, responsibilities, data flows and control points. It does not describe an implemented system.
+This document defines the logical architecture for the AnalytixFlow MVP. It converts the product vision in `docs/AnalytixFlow.docx` into explicit boundaries, responsibilities, data flows and control points. Increments 1 through 4 implement only the persistence, ingestion, preparation and bounded modeling slices described below; the remaining modules are architectural boundaries, not completed features.
 
 ## Architectural principles
 
@@ -106,7 +106,7 @@ RAG is exposed through controlled interfaces for source ingestion, textual retri
 4. The user approves the selected alternative.
 5. M2 ingests CSV or Excel files, preserves the original and creates Bronze metadata and profiling artifacts.
 6. M3 proposes and applies approved transformations from its bounded v1.1 action vocabulary to create Silver and Gold artifacts.
-7. M4 creates reproducible candidate pipelines for the selected analytical problem.
+7. M4 creates reproducible candidate pipelines for the selected analytical problem, records preliminary measured metrics and requests approval for candidate selection.
 8. M5 compares candidates against a baseline and either recommends a candidate or creates a bounded iteration request.
 9. M6 produces a local API/package/container artifact and a deployment plan. Cloud execution is not part of the MVP.
 10. M7 records governance and operational evidence. M8 exposes a read-oriented dashboard built from approved artifacts.
@@ -147,3 +147,4 @@ The main flow is iterative. M5 can return to M3 or M4 with a concrete hypothesis
 - Initial RAG uses a controlled corpus, textual retrieval and verifiable references.
 - All provider integrations are ports, not hard-coded dependencies.
 - M3 transformation semantics are explicit and versioned; free-form actions are rejected rather than interpreted as executable code.
+- M4 modeling semantics are explicit and versioned; the MVP supports only the documented local scikit-learn techniques and never presents preliminary metrics as business impact or a probability of success.
