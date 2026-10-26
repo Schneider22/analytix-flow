@@ -1,6 +1,17 @@
-import React from 'react';
+import React, { useState, useMemo } from 'react';
 import { ProjectRead } from '../../types/projects';
-import { FolderKanban, Plus, RefreshCw, AlertTriangle, ArrowRight, CheckCircle2, Clock } from 'lucide-react';
+import {
+  FolderKanban,
+  Plus,
+  RefreshCw,
+  AlertTriangle,
+  ArrowRight,
+  CheckCircle2,
+  Clock,
+  Search,
+  X,
+  Filter,
+} from 'lucide-react';
 
 interface ProjectListProps {
   projects: ProjectRead[];
@@ -19,6 +30,33 @@ export const ProjectList: React.FC<ProjectListProps> = ({
   onSelectProject,
   onOpenCreateModal,
 }) => {
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'draft' | 'active' | 'archived'>('all');
+
+  // Filtrado reactivo en capa de presentación sin recarga
+  const filteredProjects = useMemo(() => {
+    return projects.filter((project) => {
+      const query = searchTerm.toLowerCase().trim();
+      const matchesSearch =
+        query === '' ||
+        project.company_name.toLowerCase().includes(query) ||
+        project.business_need.toLowerCase().includes(query);
+
+      const matchesStatus =
+        statusFilter === 'all' ||
+        project.status.toLowerCase() === statusFilter.toLowerCase();
+
+      return matchesSearch && matchesStatus;
+    });
+  }, [projects, searchTerm, statusFilter]);
+
+  const hasActiveFilters = searchTerm.trim() !== '' || statusFilter !== 'all';
+
+  const clearFilters = () => {
+    setSearchTerm('');
+    setStatusFilter('all');
+  };
+
   return (
     <div className="space-y-6">
       {/* Barra de Herramientas y Encabezado */}
@@ -30,7 +68,9 @@ export const ProjectList: React.FC<ProjectListProps> = ({
               data-testid="project-count-badge"
               className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800"
             >
-              {projects.length}
+              {hasActiveFilters
+                ? `Mostrando ${filteredProjects.length} de ${projects.length}`
+                : projects.length}
             </span>
           </div>
           <p className="text-xs text-slate-500 mt-0.5">
@@ -59,6 +99,62 @@ export const ProjectList: React.FC<ProjectListProps> = ({
           </button>
         </div>
       </div>
+
+      {/* Controles de Búsqueda y Filtrado */}
+      {projects.length > 0 && (
+        <div className="bg-white p-3.5 rounded-xl border border-slate-200 shadow-xs flex flex-col sm:flex-row items-center gap-3">
+          {/* Buscador Textual */}
+          <div className="relative flex-1 w-full">
+            <Search className="w-4 h-4 absolute left-3 top-2.5 text-slate-400" />
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Buscar por empresa o necesidad de negocio..."
+              className="w-full pl-9 pr-8 py-1.5 text-xs rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-emerald-500 text-slate-800 placeholder-slate-400"
+              aria-label="Buscar proyectos"
+            />
+            {searchTerm && (
+              <button
+                type="button"
+                onClick={() => setSearchTerm('')}
+                className="absolute right-2.5 top-2 text-slate-400 hover:text-slate-600"
+                aria-label="Limpiar búsqueda"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </div>
+
+          {/* Filtro por Estado (Contratos Reales) */}
+          <div className="flex items-center space-x-2 w-full sm:w-auto">
+            <Filter className="w-3.5 h-3.5 text-slate-400 flex-shrink-0" />
+            <select
+              value={statusFilter}
+              onChange={(e) =>
+                setStatusFilter(e.target.value as 'all' | 'draft' | 'active' | 'archived')
+              }
+              className="text-xs rounded-lg border border-slate-300 py-1.5 px-2.5 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              aria-label="Filtrar por estado"
+            >
+              <option value="all">Todos los estados</option>
+              <option value="draft">Borrador (draft)</option>
+              <option value="active">Activo (active)</option>
+              <option value="archived">Archivado (archived)</option>
+            </select>
+
+            {hasActiveFilters && (
+              <button
+                type="button"
+                onClick={clearFilters}
+                className="px-2 py-1.5 text-[11px] font-semibold text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-lg transition-colors flex-shrink-0"
+              >
+                Limpiar
+              </button>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Estado de Error */}
       {errorMessage && (
@@ -91,7 +187,7 @@ export const ProjectList: React.FC<ProjectListProps> = ({
         </div>
       )}
 
-      {/* Estado Vacío */}
+      {/* Estado Vacío Total (Sin proyectos en el backend) */}
       {!isLoading && !errorMessage && projects.length === 0 && (
         <div
           data-testid="project-list-empty"
@@ -117,10 +213,35 @@ export const ProjectList: React.FC<ProjectListProps> = ({
         </div>
       )}
 
-      {/* Tabla / Lista de Proyectos */}
-      {!isLoading && projects.length > 0 && (
+      {/* Estado Vacío por Filtrado (Proyectos existen pero ninguno coincide) */}
+      {!isLoading && !errorMessage && projects.length > 0 && filteredProjects.length === 0 && (
+        <div
+          data-testid="project-list-filtered-empty"
+          className="bg-white border border-dashed border-slate-300 rounded-xl p-8 text-center max-w-md mx-auto space-y-3 text-xs"
+        >
+          <Search className="w-8 h-8 text-slate-300 mx-auto" />
+          <div>
+            <h4 className="font-semibold text-slate-800 text-sm">
+              No se encontraron proyectos coincidentes
+            </h4>
+            <p className="text-slate-500 mt-1">
+              No hay proyectos que correspondan con los criterios de búsqueda o filtros seleccionados.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={clearFilters}
+            className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200 transition-colors"
+          >
+            Limpiar filtros de búsqueda
+          </button>
+        </div>
+      )}
+
+      {/* Tabla / Lista de Proyectos Filtrados */}
+      {!isLoading && filteredProjects.length > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-          {projects.map((project) => (
+          {filteredProjects.map((project) => (
             <div
               key={project.id}
               data-testid={`project-card-${project.id}`}

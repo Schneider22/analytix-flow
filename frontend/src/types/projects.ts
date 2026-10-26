@@ -98,3 +98,30 @@ export interface DecisionRead {
   decided_at: string | null;
   created_at: string;
 }
+
+export interface AuditEventRead {
+  id: string;
+  project_id: string;
+  actor_type: string;
+  actor_id: string | null;
+  action: string;
+  entity_type: string;
+  entity_id: string;
+  module_id: string | null;
+  input_hash: string | null;
+  output_hash: string | null;
+  correlation_id: string | null;
+  metadata: Record<string, unknown>;
+  created_at: string;
+}
+
+export interface AlternativeComparison {
+  id: string;
+  name: string;
+  approach: string;
+  suitability: string;
+  data_requirements: string;
+  estimated_complexity: 'Baja' | 'Media' | 'Alta';
+  risks_and_limitations: string;
+  empirical_evidence_level: 'Alto' | 'Medio' | 'Preliminar';
+}

@@ -7,6 +7,9 @@ import { ProjectRead } from '../../types/projects';
 import { ApiError } from '../../api/client';
 
 describe('ProjectCreateModal Component', () => {
+  beforeEach(() => {
+    vi.restoreAllMocks();
+  });
   const mockCreated: ProjectRead = {
     id: 'new-proj-123',
     company_name: 'Test Corp',

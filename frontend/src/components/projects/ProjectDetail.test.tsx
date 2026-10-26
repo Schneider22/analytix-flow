@@ -5,7 +5,8 @@ import { ProjectDetail } from './ProjectDetail';
 import * as projectsApi from '../../api/projects';
 import * as contextApi from '../../api/context';
 import * as decisionsApi from '../../api/decisions';
-import { ProjectRead, ContextRead, DecisionRead } from '../../types/projects';
+import * as auditApi from '../../api/audit';
+import { ProjectRead, ContextRead, DecisionRead, AuditEventRead } from '../../types/projects';
 
 describe('ProjectDetail Component', () => {
   beforeEach(() => {
@@ -65,10 +66,27 @@ describe('ProjectDetail Component', () => {
     created_at: '2026-10-26T12:00:00Z',
   };
 
+  const mockAuditEvent: AuditEventRead = {
+    id: 'evt-12345',
+    project_id: 'proj-12345-uuid',
+    actor_type: 'user',
+    actor_id: 'lead-analyst',
+    action: 'project.created',
+    entity_type: 'project',
+    entity_id: 'proj-12345-uuid',
+    module_id: 'M1',
+    correlation_id: 'corr-12345-uuid',
+    metadata: { company_name: 'Empresa Detalle S.A.' },
+    created_at: '2026-10-26T12:00:00Z',
+    input_hash: '1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef',
+    output_hash: 'abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890',
+  };
+
   it('renders loading state initially and then shows project details', async () => {
     vi.spyOn(projectsApi, 'getProject').mockResolvedValueOnce(mockProject);
     vi.spyOn(contextApi, 'listContextSnapshots').mockResolvedValueOnce([]);
     vi.spyOn(decisionsApi, 'listDecisions').mockResolvedValueOnce([]);
+    vi.spyOn(auditApi, 'listAuditEvents').mockResolvedValueOnce([]);
 
     render(<ProjectDetail projectId="proj-12345-uuid" onBack={vi.fn()} />);
 
@@ -94,6 +112,7 @@ describe('ProjectDetail Component', () => {
     vi.spyOn(projectsApi, 'getProject').mockResolvedValueOnce(mockProject);
     vi.spyOn(contextApi, 'listContextSnapshots').mockResolvedValueOnce([]);
     vi.spyOn(decisionsApi, 'listDecisions').mockResolvedValueOnce([]);
+    vi.spyOn(auditApi, 'listAuditEvents').mockResolvedValueOnce([]);
 
     render(<ProjectDetail projectId="proj-12345-uuid" onBack={handleBack} />);
 
@@ -112,6 +131,7 @@ describe('ProjectDetail Component', () => {
     vi.spyOn(projectsApi, 'getProject').mockResolvedValueOnce(mockProject);
     vi.spyOn(contextApi, 'listContextSnapshots').mockResolvedValueOnce([]);
     vi.spyOn(decisionsApi, 'listDecisions').mockResolvedValueOnce([]);
+    vi.spyOn(auditApi, 'listAuditEvents').mockResolvedValueOnce([]);
 
     const writeTextMock = vi.fn().mockResolvedValue(undefined);
     Object.defineProperty(navigator, 'clipboard', {
@@ -140,6 +160,7 @@ describe('ProjectDetail Component', () => {
       .mockResolvedValueOnce(mockProject);
     vi.spyOn(contextApi, 'listContextSnapshots').mockResolvedValue([]);
     vi.spyOn(decisionsApi, 'listDecisions').mockResolvedValue([]);
+    vi.spyOn(auditApi, 'listAuditEvents').mockResolvedValue([]);
 
     render(<ProjectDetail projectId="proj-12345-uuid" onBack={vi.fn()} />);
 
@@ -159,11 +180,12 @@ describe('ProjectDetail Component', () => {
     expect(getProjectSpy).toHaveBeenCalledTimes(2);
   });
 
-  it('switches between tabs and displays context timeline and decision list', async () => {
+  it('switches between tabs and displays context timeline, decisions, alternatives matrix and audit trail', async () => {
     const user = userEvent.setup();
     vi.spyOn(projectsApi, 'getProject').mockResolvedValue(mockProject);
     vi.spyOn(contextApi, 'listContextSnapshots').mockResolvedValue([mockSnapshot]);
     vi.spyOn(decisionsApi, 'listDecisions').mockResolvedValue([mockDecision]);
+    vi.spyOn(auditApi, 'listAuditEvents').mockResolvedValue([mockAuditEvent]);
 
     render(<ProjectDetail projectId="proj-12345-uuid" onBack={vi.fn()} />);
 
@@ -171,33 +193,49 @@ describe('ProjectDetail Component', () => {
       expect(screen.getByText('Empresa Detalle S.A.')).toBeInTheDocument();
     });
 
-    // Verify tabs badges
+    // Verify tabs buttons
     const contextTab = screen.getByRole('button', { name: /Instantáneas de Contexto/i });
     expect(contextTab).toBeInTheDocument();
 
     const decisionsTab = screen.getByRole('button', { name: /Decisiones de Negocio/i });
     expect(decisionsTab).toBeInTheDocument();
 
-    // Click Context Snapshots tab
-    await user.click(contextTab);
+    const alternativesTab = screen.getByRole('button', { name: /Matriz de Alternativas/i });
+    expect(alternativesTab).toBeInTheDocument();
 
+    const auditTab = screen.getByRole('button', { name: /Pista de Auditoría/i });
+    expect(auditTab).toBeInTheDocument();
+
+    // 1. Click Context Snapshots tab
+    await user.click(contextTab);
     expect(screen.getByText('Línea de Tiempo del Contexto de Negocio')).toBeInTheDocument();
     expect(screen.getByText('Versión 1')).toBeInTheDocument();
     expect(screen.getByText('Versión Activa')).toBeInTheDocument();
 
-    // Click Decisions tab
+    // 2. Click Decisions tab
     await user.click(decisionsTab);
-
     expect(
       screen.getByText('¿Qué algoritmo usar para predicción de tiempos?')
     ).toBeInTheDocument();
     expect(screen.getByText('Decidida')).toBeInTheDocument();
     expect(screen.getByText('Adoptada')).toBeInTheDocument();
 
-    // Click back to Ficha General tab
+    // 3. Click Alternatives Matrix tab
+    await user.click(alternativesTab);
+    expect(screen.getByText(/Matriz Comparativa de Alternativas/i)).toBeInTheDocument();
+    expect(screen.getByText('Clasificación Supervisada Tabular')).toBeInTheDocument();
+    expect(screen.getByText('Motor Heurístico de Reglas de Negocio')).toBeInTheDocument();
+    expect(screen.getByText('Detección de Anomalías y Agrupamiento')).toBeInTheDocument();
+
+    // 4. Click Audit Trail tab
+    await user.click(auditTab);
+    expect(screen.getByText('Pista de Auditoría y Linaje del Proyecto')).toBeInTheDocument();
+    expect(screen.getByText('project.created')).toBeInTheDocument();
+    expect(screen.getByText('corr-12345-uuid')).toBeInTheDocument();
+
+    // 5. Click back to Ficha General tab
     const generalTab = screen.getByRole('button', { name: /Ficha General/i });
     await user.click(generalTab);
-
     expect(screen.getByText('Criterios de Éxito Verificables')).toBeInTheDocument();
   });
 });
