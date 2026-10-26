@@ -38,6 +38,7 @@ from .schemas import (
     M5EvaluationRequest,
     M6DeploymentRequest,
     M7GovernanceRequest,
+    M8DashboardInput,
     ProjectCreate,
     ProjectRead,
 )
@@ -460,6 +461,48 @@ def create_app(settings: Settings | None = None, *, engine=None, session_factory
         db: Session = Depends(get_db),
     ):
         return request.app.state.orchestrator.run_m7(
+            db,
+            project_id,
+            payload,
+            request.app.state.artifact_store,
+            max_metadata_bytes=settings.max_metadata_bytes,
+        )
+
+    @router.post("/projects/{project_id}/dashboard", response_model=dict)
+    def generate_dashboard_endpoint(
+        project_id: str,
+        request: Request,
+        payload: M8DashboardInput,
+        db: Session = Depends(get_db),
+    ):
+        return request.app.state.orchestrator.generate_dashboard(
+            db,
+            project_id,
+            payload,
+            request.app.state.artifact_store,
+            max_metadata_bytes=settings.max_metadata_bytes,
+        )
+
+    @router.get("/projects/{project_id}/dashboard", response_model=dict)
+    def get_dashboard_endpoint(
+        project_id: str,
+        request: Request,
+        db: Session = Depends(get_db),
+    ):
+        return request.app.state.orchestrator.get_latest_dashboard(
+            db,
+            project_id,
+            request.app.state.artifact_store,
+        )
+
+    @router.post("/projects/{project_id}/executions/m8", response_model=dict)
+    def run_m8_endpoint(
+        project_id: str,
+        request: Request,
+        payload: M8DashboardInput,
+        db: Session = Depends(get_db),
+    ):
+        return request.app.state.orchestrator.generate_dashboard(
             db,
             project_id,
             payload,

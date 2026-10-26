@@ -564,3 +564,135 @@ class M7GovernanceResult(StrictModel):
     completed_at: datetime | str | None = None
     output_hash: str | None = Field(default=None, pattern=r"^sha256:[a-f0-9]{64}$")
     module_output: M7ModuleOutput
+
+
+class ContractCitation(StrictModel):
+    citation_id: str = Field(min_length=1)
+    source_id: str = Field(min_length=1)
+    locator: str = Field(min_length=1)
+    evidence_type: Literal[
+        "technical_documentation",
+        "research",
+        "standard",
+        "project_artifact",
+        "experience_record",
+        "hypothesis",
+    ]
+    retrieved_at: datetime | None = None
+    limitations: list[str] = Field(default_factory=list)
+
+
+class ClaimPolicy(StrictModel):
+    required_classification: Literal[True] = True
+    require_source_reference: Literal[True] = True
+    allow_hypotheses: bool | None = Field(default=None, strict=True)
+
+
+M8ClaimPolicy = ClaimPolicy
+
+
+class M8ModuleInput(StrictModel):
+    context_artifacts: list[ContractArtifactReference]
+    result_artifacts: list[ContractArtifactReference]
+    claim_policy: ClaimPolicy
+
+
+class M8DashboardInput(StrictModel):
+    project_id: str = Field(min_length=1)
+    execution_id: str = Field(min_length=1, max_length=128)
+    module_id: Literal["m8"] = "m8"
+    contract_version: str = Field(default="v1.0", pattern=r"^v[0-9]+(?:\.[0-9]+){0,2}$")
+    context_snapshot_id: str = Field(min_length=1)
+    artifact_refs: list[ContractArtifactReference] = Field(default_factory=list, max_length=100)
+    status: Literal[
+        "requested",
+        "ready",
+        "running",
+        "awaiting_approval",
+        "succeeded",
+        "rejected",
+        "failed_retryable",
+        "failed_terminal",
+        "superseded",
+    ] = "requested"
+    warnings: list[str] = Field(default_factory=list)
+    errors: list[dict[str, Any]] = Field(default_factory=list)
+    correlation_id: str = Field(min_length=1, max_length=128)
+    idempotency_key: str = Field(min_length=1, max_length=128)
+    requested_by: str | None = Field(default=None, min_length=1, max_length=128)
+    requested_at: datetime | None = None
+    input_hash: str | None = Field(default=None, pattern=r"^sha256:[a-f0-9]{64}$")
+    approval_refs: list[ContractApprovalReference] = Field(default_factory=list, max_length=100)
+    module_input: M8ModuleInput
+
+
+M8DashboardRequest = M8DashboardInput
+
+
+class DashboardClaim(StrictModel):
+    claim: str = Field(min_length=1)
+    classification: Literal["measured", "estimated", "hypothesis", "documentary_evidence"]
+    source_artifacts: list[ContractArtifactReference]
+    citations: list[ContractCitation] = Field(default_factory=list)
+
+
+M8DashboardClaim = DashboardClaim
+
+
+class DashboardSection(StrictModel):
+    section_id: str = Field(min_length=1)
+    title: str = Field(min_length=1)
+    claims: list[DashboardClaim]
+
+
+M8DashboardSection = DashboardSection
+
+
+class DashboardRoadmapItem(StrictModel):
+    item: str = Field(min_length=1)
+    dependencies: list[str] = Field(default_factory=list)
+    success_signal: str = Field(min_length=1)
+
+
+M8RoadmapItem = DashboardRoadmapItem
+
+
+class M8ModuleOutput(StrictModel):
+    dashboard_artifact: ContractArtifactReference
+    sections: list[DashboardSection] = Field(min_length=1)
+    roadmap: list[DashboardRoadmapItem] = Field(default_factory=list)
+
+
+class M8NextAction(StrictModel):
+    action: str = Field(min_length=1)
+    requires_approval: bool
+    target_module: Literal["m1", "m2", "m3", "m4", "m5", "m6", "m7", "m8"] | None = None
+    hypothesis: str | None = None
+
+
+class M8DashboardOutput(StrictModel):
+    project_id: str = Field(min_length=1)
+    execution_id: str = Field(min_length=1, max_length=128)
+    module_id: Literal["m8"] = "m8"
+    contract_version: str = Field(default="v1.0", pattern=r"^v[0-9]+(?:\.[0-9]+){0,2}$")
+    context_snapshot_id: str = Field(min_length=1)
+    correlation_id: str = Field(min_length=1, max_length=128)
+    status: Literal[
+        "succeeded",
+        "awaiting_approval",
+        "rejected",
+        "failed_retryable",
+        "failed_terminal",
+        "superseded",
+    ] = "succeeded"
+    artifacts: list[ContractArtifactReference] = Field(default_factory=list)
+    approval_refs: list[ContractApprovalReference] = Field(default_factory=list)
+    warnings: list[str] = Field(default_factory=list)
+    errors: list[dict[str, Any]] = Field(default_factory=list)
+    next_actions: list[M8NextAction] = Field(default_factory=list)
+    completed_at: datetime | None = None
+    output_hash: str | None = Field(default=None, pattern=r"^sha256:[a-f0-9]{64}$")
+    module_output: M8ModuleOutput
+
+
+M8DashboardResult = M8DashboardOutput
