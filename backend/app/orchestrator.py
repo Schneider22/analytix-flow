@@ -7,12 +7,14 @@ from .m3_preparation import M3PreparationModule
 from .m4_modeling import M4ModelingModule
 from .m5_evaluation import M5EvaluationModule
 from .m6_deployment import M6DeploymentModule
+from .m7_governance import M7GovernanceModule
 from .schemas import (
     M2IngestionRequest,
     M3PreparationRequest,
     M4ModelingRequest,
     M5EvaluationRequest,
     M6DeploymentRequest,
+    M7GovernanceRequest,
 )
 from .storage import ArtifactStore
 
@@ -30,6 +32,7 @@ class ProjectOrchestrator:
         self._m4 = M4ModelingModule()
         self._m5 = M5EvaluationModule()
         self._m6 = M6DeploymentModule()
+        self._m7 = M7GovernanceModule()
 
     def run_m2(
         self,
@@ -109,6 +112,23 @@ class ProjectOrchestrator:
         max_metadata_bytes: int,
     ) -> dict:
         return self._m6.execute(
+            db,
+            project_id,
+            payload,
+            artifact_store,
+            max_metadata_bytes=max_metadata_bytes,
+        )
+
+    def run_m7(
+        self,
+        db: Session,
+        project_id: str,
+        payload: M7GovernanceRequest,
+        artifact_store: ArtifactStore,
+        *,
+        max_metadata_bytes: int,
+    ) -> dict:
+        return self._m7.execute(
             db,
             project_id,
             payload,

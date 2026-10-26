@@ -456,3 +456,111 @@ class M6DeploymentRequest(StrictModel):
     input_hash: str | None = Field(default=None, pattern=r"^sha256:[a-f0-9]{64}$")
     approval_refs: list[ContractApprovalReference] = Field(min_length=1, max_length=100)
     module_input: M6ModuleInput
+
+
+class M7OperationalPolicy(StrictModel):
+    audit_retention_required: bool
+    quality_checks: list[str] = Field(default_factory=list)
+    freshness_checks: list[str] = Field(default_factory=list)
+
+
+class M7ModuleInput(StrictModel):
+    project_artifacts: list[ContractArtifactReference] = Field(default_factory=list)
+    execution_ids: list[str] = Field(default_factory=list)
+    operational_policy: M7OperationalPolicy
+
+    @field_validator("execution_ids")
+    @classmethod
+    def unique_execution_ids(cls, v: list[str]) -> list[str]:
+        if len(v) != len(set(v)):
+            raise ValueError("execution_ids must contain unique items")
+        for item in v:
+            if not item or not item.strip():
+                raise ValueError("execution_id items cannot be empty")
+        return v
+
+
+class M7GovernanceRequest(StrictModel):
+    project_id: str = Field(min_length=1)
+    execution_id: str = Field(min_length=1, max_length=128)
+    module_id: Literal["m7"]
+    contract_version: Literal["v1.0"]
+    context_snapshot_id: str = Field(min_length=1)
+    artifact_refs: list[ContractArtifactReference] = Field(default_factory=list, max_length=100)
+    status: Literal[
+        "requested",
+        "ready",
+        "running",
+        "awaiting_approval",
+        "succeeded",
+        "rejected",
+        "failed_retryable",
+        "failed_terminal",
+        "superseded",
+    ]
+    warnings: list[str] = Field(default_factory=list)
+    errors: list[dict[str, Any]] = Field(default_factory=list)
+    correlation_id: str = Field(min_length=1, max_length=128)
+    idempotency_key: str = Field(min_length=1, max_length=128)
+    requested_by: str | None = Field(default=None, min_length=1, max_length=128)
+    requested_at: datetime | None = None
+    input_hash: str | None = Field(default=None, pattern=r"^sha256:[a-f0-9]{64}$")
+    approval_refs: list[ContractApprovalReference] = Field(default_factory=list, max_length=100)
+    module_input: M7ModuleInput
+
+
+class M7ProjectState(StrictModel):
+    current_phase: str = Field(min_length=1)
+    module_statuses: dict[str, str] = Field(default_factory=dict)
+    blocked_reasons: list[str] = Field(default_factory=list)
+
+
+class M7OperationalIndicator(StrictModel):
+    name: str = Field(min_length=1)
+    classification: Literal["measured", "estimated", "hypothesis", "documentary_evidence"]
+    value_status: str = Field(min_length=1)
+    source_artifact: ContractArtifactReference | None = None
+
+
+class M7MaintenancePlan(StrictModel):
+    procedures: list[str] = Field(default_factory=list)
+    future_controls: list[str] = Field(default_factory=list)
+
+
+class M7ModuleOutput(StrictModel):
+    audit_artifact: ContractArtifactReference
+    project_state: M7ProjectState
+    operational_indicators: list[M7OperationalIndicator] = Field(default_factory=list)
+    maintenance_plan: M7MaintenancePlan
+
+
+class M7NextAction(StrictModel):
+    action: str = Field(min_length=1)
+    requires_approval: bool
+    target_module: Literal["m1", "m2", "m3", "m4", "m5", "m6", "m7", "m8"] | None = None
+    hypothesis: str | None = None
+
+
+class M7GovernanceResult(StrictModel):
+    project_id: str = Field(min_length=1)
+    execution_id: str = Field(min_length=1, max_length=128)
+    module_id: Literal["m7"] = "m7"
+    contract_version: Literal["v1.0"] = "v1.0"
+    context_snapshot_id: str = Field(min_length=1)
+    correlation_id: str = Field(min_length=1, max_length=128)
+    status: Literal[
+        "succeeded",
+        "awaiting_approval",
+        "rejected",
+        "failed_retryable",
+        "failed_terminal",
+        "superseded",
+    ]
+    artifacts: list[ContractArtifactReference] = Field(default_factory=list)
+    approval_refs: list[ContractApprovalReference] = Field(default_factory=list)
+    warnings: list[str] = Field(default_factory=list)
+    errors: list[dict[str, Any]] = Field(default_factory=list)
+    next_actions: list[M7NextAction] = Field(default_factory=list)
+    completed_at: datetime | str | None = None
+    output_hash: str | None = Field(default=None, pattern=r"^sha256:[a-f0-9]{64}$")
+    module_output: M7ModuleOutput

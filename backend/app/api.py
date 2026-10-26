@@ -37,6 +37,7 @@ from .schemas import (
     M4ModelingRequest,
     M5EvaluationRequest,
     M6DeploymentRequest,
+    M7GovernanceRequest,
     ProjectCreate,
     ProjectRead,
 )
@@ -444,6 +445,21 @@ def create_app(settings: Settings | None = None, *, engine=None, session_factory
         db: Session = Depends(get_db),
     ):
         return request.app.state.orchestrator.run_m6(
+            db,
+            project_id,
+            payload,
+            request.app.state.artifact_store,
+            max_metadata_bytes=settings.max_metadata_bytes,
+        )
+
+    @router.post("/projects/{project_id}/executions/m7", response_model=dict)
+    def run_m7_endpoint(
+        project_id: str,
+        request: Request,
+        payload: M7GovernanceRequest,
+        db: Session = Depends(get_db),
+    ):
+        return request.app.state.orchestrator.run_m7(
             db,
             project_id,
             payload,
