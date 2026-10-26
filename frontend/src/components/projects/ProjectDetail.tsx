@@ -1,6 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { ProjectRead } from '../../types/projects';
+import { ProjectRead, ContextRead, DecisionRead } from '../../types/projects';
 import { getProject } from '../../api/projects';
+import { listContextSnapshots } from '../../api/context';
+import { listDecisions } from '../../api/decisions';
+import { ContextTimeline } from './ContextTimeline';
+import { DecisionList } from './DecisionList';
 import {
   ArrowLeft,
   Copy,
@@ -15,6 +19,8 @@ import {
   Sparkles,
   Calendar,
   User,
+  History,
+  Scale,
 } from 'lucide-react';
 
 interface ProjectDetailProps {
@@ -27,6 +33,19 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({ projectId, onBack 
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState(false);
+
+  // Pestaña Activa: 'general' | 'context' | 'decisions'
+  const [activeTab, setActiveTab] = useState<'general' | 'context' | 'decisions'>('general');
+
+  // Estado de Instantáneas de Contexto
+  const [snapshots, setSnapshots] = useState<ContextRead[]>([]);
+  const [isLoadingSnapshots, setIsLoadingSnapshots] = useState(false);
+  const [snapshotsError, setSnapshotsError] = useState<string | null>(null);
+
+  // Estado de Decisiones de Negocio
+  const [decisions, setDecisions] = useState<DecisionRead[]>([]);
+  const [isLoadingDecisions, setIsLoadingDecisions] = useState(false);
+  const [decisionsError, setDecisionsError] = useState<string | null>(null);
 
   const fetchProject = useCallback(async () => {
     setIsLoading(true);
@@ -45,9 +64,45 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({ projectId, onBack 
     }
   }, [projectId]);
 
+  const fetchSnapshots = useCallback(async () => {
+    setIsLoadingSnapshots(true);
+    setSnapshotsError(null);
+    try {
+      const data = await listContextSnapshots(projectId);
+      setSnapshots(data);
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setSnapshotsError(err.message);
+      } else {
+        setSnapshotsError('Error al consultar las instantáneas de contexto');
+      }
+    } finally {
+      setIsLoadingSnapshots(false);
+    }
+  }, [projectId]);
+
+  const fetchDecisions = useCallback(async () => {
+    setIsLoadingDecisions(true);
+    setDecisionsError(null);
+    try {
+      const data = await listDecisions(projectId);
+      setDecisions(data);
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setDecisionsError(err.message);
+      } else {
+        setDecisionsError('Error al consultar las decisiones de negocio');
+      }
+    } finally {
+      setIsLoadingDecisions(false);
+    }
+  }, [projectId]);
+
   useEffect(() => {
     fetchProject();
-  }, [fetchProject]);
+    fetchSnapshots();
+    fetchDecisions();
+  }, [fetchProject, fetchSnapshots, fetchDecisions]);
 
   const handleCopyId = async () => {
     if (!project?.id) return;
@@ -58,6 +113,20 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({ projectId, onBack 
     } catch {
       // Fallback
     }
+  };
+
+  const handleRefreshAll = () => {
+    fetchProject();
+    fetchSnapshots();
+    fetchDecisions();
+  };
+
+  const handleSnapshotCreated = (newSnapshot: ContextRead) => {
+    setSnapshots((prev) => [...prev, newSnapshot]);
+  };
+
+  const handleDecisionCreated = (newDecision: DecisionRead) => {
+    setDecisions((prev) => [newDecision, ...prev]);
   };
 
   if (isLoading) {
@@ -89,7 +158,7 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({ projectId, onBack 
           </button>
           <button
             type="button"
-            onClick={fetchProject}
+            onClick={handleRefreshAll}
             className="px-3.5 py-1.5 text-xs font-semibold rounded-lg bg-rose-600 text-white hover:bg-rose-700 transition-colors shadow-sm"
           >
             Reintentar
@@ -118,7 +187,7 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({ projectId, onBack 
                 Ficha del Proyecto
               </span>
               <span className="text-slate-300">&bull;</span>
-              <span className="text-xs text-slate-500">M1: Negocio</span>
+              <span className="text-xs text-slate-500">M1: Entendimiento de Negocio</span>
             </div>
             <h1 className="text-xl font-bold text-slate-900 tracking-tight">
               {project.company_name}
@@ -132,13 +201,17 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({ projectId, onBack 
           </span>
           <button
             type="button"
-            onClick={fetchProject}
-            disabled={isLoading}
+            onClick={handleRefreshAll}
+            disabled={isLoading || isLoadingSnapshots || isLoadingDecisions}
             className="p-2 rounded-lg text-slate-500 hover:text-slate-700 hover:bg-slate-100 transition-colors"
-            title="Refrescar ficha"
+            title="Refrescar proyecto y módulos"
             aria-label="Refrescar ficha"
           >
-            <RefreshCw className="w-4 h-4" />
+            <RefreshCw
+              className={`w-4 h-4 ${
+                isLoading || isLoadingSnapshots || isLoadingDecisions ? 'animate-spin' : ''
+              }`}
+            />
           </button>
         </div>
       </div>
@@ -186,158 +259,253 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({ projectId, onBack 
         </div>
       </div>
 
-      {/* Secciones del Problema y Entendimiento de Negocio */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Columna Izquierda: Definición del Problema */}
-        <div className="space-y-6">
-          {/* Descripción de la Empresa */}
-          <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm space-y-2">
-            <h3 className="font-semibold text-slate-900 text-xs flex items-center space-x-2">
-              <Building2 className="w-4 h-4 text-emerald-600" />
-              <span>Descripción de la Empresa</span>
-            </h3>
-            <p className="text-xs text-slate-700 leading-relaxed whitespace-pre-line bg-slate-50/50 p-3 rounded-lg border border-slate-100">
-              {project.company_description}
-            </p>
-          </div>
+      {/* Pestañas de Navegación de Módulo */}
+      <div className="border-b border-slate-200">
+        <nav className="flex space-x-4 -mb-px" aria-label="Pestañas de la Ficha">
+          <button
+            type="button"
+            onClick={() => setActiveTab('general')}
+            className={`inline-flex items-center space-x-2 py-3 px-1 border-b-2 font-medium text-xs transition-colors ${
+              activeTab === 'general'
+                ? 'border-emerald-600 text-emerald-700 font-semibold'
+                : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
+            }`}
+          >
+            <FileText className="w-4 h-4" />
+            <span>Ficha General</span>
+          </button>
 
-          {/* Necesidad de Negocio */}
-          <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm space-y-2">
-            <h3 className="font-semibold text-slate-900 text-xs flex items-center space-x-2">
-              <Target className="w-4 h-4 text-blue-600" />
-              <span>Necesidad o Problema de Negocio</span>
-            </h3>
-            <p className="text-xs text-slate-700 leading-relaxed whitespace-pre-line bg-slate-50/50 p-3 rounded-lg border border-slate-100">
-              {project.business_need}
-            </p>
-          </div>
+          <button
+            type="button"
+            onClick={() => setActiveTab('context')}
+            className={`inline-flex items-center space-x-2 py-3 px-1 border-b-2 font-medium text-xs transition-colors ${
+              activeTab === 'context'
+                ? 'border-emerald-600 text-emerald-700 font-semibold'
+                : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
+            }`}
+          >
+            <History className="w-4 h-4" />
+            <span>Instantáneas de Contexto</span>
+            <span
+              className={`px-1.5 py-0.5 text-[10px] rounded-full font-bold ${
+                activeTab === 'context'
+                  ? 'bg-emerald-100 text-emerald-800'
+                  : 'bg-slate-100 text-slate-600'
+              }`}
+            >
+              {snapshots.length}
+            </span>
+          </button>
 
-          {/* Objetivo Esperado */}
-          <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm space-y-2">
-            <h3 className="font-semibold text-slate-900 text-xs flex items-center space-x-2">
-              <Sparkles className="w-4 h-4 text-amber-600" />
-              <span>Objetivo Analítico Esperado</span>
-            </h3>
-            <p className="text-xs text-slate-700 leading-relaxed whitespace-pre-line bg-slate-50/50 p-3 rounded-lg border border-slate-100">
-              {project.expected_objective}
-            </p>
-          </div>
-        </div>
+          <button
+            type="button"
+            onClick={() => setActiveTab('decisions')}
+            className={`inline-flex items-center space-x-2 py-3 px-1 border-b-2 font-medium text-xs transition-colors ${
+              activeTab === 'decisions'
+                ? 'border-indigo-600 text-indigo-700 font-semibold'
+                : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
+            }`}
+          >
+            <Scale className="w-4 h-4" />
+            <span>Decisiones de Negocio</span>
+            <span
+              className={`px-1.5 py-0.5 text-[10px] rounded-full font-bold ${
+                activeTab === 'decisions'
+                  ? 'bg-indigo-100 text-indigo-800'
+                  : 'bg-slate-100 text-slate-600'
+              }`}
+            >
+              {decisions.length}
+            </span>
+          </button>
+        </nav>
+      </div>
 
-        {/* Columna Derecha: Criterios, Reglas y Restricciones */}
-        <div className="space-y-6">
-          {/* Criterios de Éxito */}
-          <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm space-y-3">
-            <div className="flex items-center justify-between">
-              <h3 className="font-semibold text-slate-900 text-xs flex items-center space-x-2">
-                <Check className="w-4 h-4 text-emerald-600" />
-                <span>Criterios de Éxito Verificables</span>
-              </h3>
-              <span className="text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded">
-                {project.success_criteria.length} definidos
-              </span>
+      {/* Contenido de la Pestaña: Ficha General */}
+      {activeTab === 'general' && (
+        <div className="space-y-6 animate-in fade-in duration-150">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Columna Izquierda: Definición del Problema */}
+            <div className="space-y-6">
+              {/* Descripción de la Empresa */}
+              <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm space-y-2">
+                <h3 className="font-semibold text-slate-900 text-xs flex items-center space-x-2">
+                  <Building2 className="w-4 h-4 text-emerald-600" />
+                  <span>Descripción de la Empresa</span>
+                </h3>
+                <p className="text-xs text-slate-700 leading-relaxed whitespace-pre-line bg-slate-50/50 p-3 rounded-lg border border-slate-100">
+                  {project.company_description}
+                </p>
+              </div>
+
+              {/* Necesidad de Negocio */}
+              <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm space-y-2">
+                <h3 className="font-semibold text-slate-900 text-xs flex items-center space-x-2">
+                  <Target className="w-4 h-4 text-blue-600" />
+                  <span>Necesidad o Problema de Negocio</span>
+                </h3>
+                <p className="text-xs text-slate-700 leading-relaxed whitespace-pre-line bg-slate-50/50 p-3 rounded-lg border border-slate-100">
+                  {project.business_need}
+                </p>
+              </div>
+
+              {/* Objetivo Esperado */}
+              <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm space-y-2">
+                <h3 className="font-semibold text-slate-900 text-xs flex items-center space-x-2">
+                  <Sparkles className="w-4 h-4 text-amber-600" />
+                  <span>Objetivo Analítico Esperado</span>
+                </h3>
+                <p className="text-xs text-slate-700 leading-relaxed whitespace-pre-line bg-slate-50/50 p-3 rounded-lg border border-slate-100">
+                  {project.expected_objective}
+                </p>
+              </div>
             </div>
 
-            <ul className="space-y-2 text-xs">
-              {project.success_criteria.map((criterion, index) => (
-                <li
-                  key={index}
-                  className="flex items-start space-x-2 bg-emerald-50/40 border border-emerald-100 p-2.5 rounded-lg text-slate-800"
-                >
-                  <span className="w-4 h-4 rounded-full bg-emerald-100 text-emerald-700 font-mono text-[10px] flex items-center justify-center flex-shrink-0 mt-0.5 font-bold">
-                    {index + 1}
+            {/* Columna Derecha: Criterios, Reglas y Restricciones */}
+            <div className="space-y-6">
+              {/* Criterios de Éxito */}
+              <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm space-y-3">
+                <div className="flex items-center justify-between">
+                  <h3 className="font-semibold text-slate-900 text-xs flex items-center space-x-2">
+                    <Check className="w-4 h-4 text-emerald-600" />
+                    <span>Criterios de Éxito Verificables</span>
+                  </h3>
+                  <span className="text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded">
+                    {project.success_criteria.length} definidos
                   </span>
-                  <span className="leading-relaxed">{criterion}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
+                </div>
 
-          {/* Reglas de Negocio */}
-          <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm space-y-3">
-            <div className="flex items-center justify-between">
-              <h3 className="font-semibold text-slate-900 text-xs flex items-center space-x-2">
-                <Shield className="w-4 h-4 text-slate-700" />
-                <span>Reglas de Negocio</span>
-              </h3>
-              <span className="text-[11px] text-slate-500 font-medium">
-                {project.business_rules.length} declaradas
-              </span>
+                <ul className="space-y-2 text-xs">
+                  {project.success_criteria.map((criterion, index) => (
+                    <li
+                      key={index}
+                      className="flex items-start space-x-2 bg-emerald-50/40 border border-emerald-100 p-2.5 rounded-lg text-slate-800"
+                    >
+                      <span className="w-4 h-4 rounded-full bg-emerald-100 text-emerald-700 font-mono text-[10px] flex items-center justify-center flex-shrink-0 mt-0.5 font-bold">
+                        {index + 1}
+                      </span>
+                      <span className="leading-relaxed">{criterion}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              {/* Reglas de Negocio */}
+              <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm space-y-3">
+                <div className="flex items-center justify-between">
+                  <h3 className="font-semibold text-slate-900 text-xs flex items-center space-x-2">
+                    <Shield className="w-4 h-4 text-slate-700" />
+                    <span>Reglas de Negocio</span>
+                  </h3>
+                  <span className="text-[11px] text-slate-500 font-medium">
+                    {project.business_rules.length} declaradas
+                  </span>
+                </div>
+
+                {project.business_rules.length === 0 ? (
+                  <p className="text-xs text-slate-400 italic">No se declararon reglas de negocio adicionales.</p>
+                ) : (
+                  <ul className="space-y-1.5 text-xs">
+                    {project.business_rules.map((rule, index) => (
+                      <li
+                        key={index}
+                        className="flex items-start space-x-2 bg-slate-50 border border-slate-100 p-2 rounded-lg text-slate-700"
+                      >
+                        <span className="w-1.5 h-1.5 rounded-full bg-slate-400 mt-1.5 flex-shrink-0"></span>
+                        <span>{rule}</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+
+              {/* Restricciones */}
+              <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm space-y-3">
+                <div className="flex items-center justify-between">
+                  <h3 className="font-semibold text-slate-900 text-xs flex items-center space-x-2">
+                    <FileText className="w-4 h-4 text-slate-700" />
+                    <span>Restricciones del Proyecto</span>
+                  </h3>
+                  <span className="text-[11px] text-slate-500 font-medium">
+                    {project.constraints.length} declaradas
+                  </span>
+                </div>
+
+                {project.constraints.length === 0 ? (
+                  <p className="text-xs text-slate-400 italic">No se declararon restricciones adicionales.</p>
+                ) : (
+                  <ul className="space-y-1.5 text-xs">
+                    {project.constraints.map((constraint, index) => (
+                      <li
+                        key={index}
+                        className="flex items-start space-x-2 bg-slate-50 border border-slate-100 p-2 rounded-lg text-slate-700"
+                      >
+                        <span className="w-1.5 h-1.5 rounded-full bg-slate-400 mt-1.5 flex-shrink-0"></span>
+                        <span>{constraint}</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
             </div>
-
-            {project.business_rules.length === 0 ? (
-              <p className="text-xs text-slate-400 italic">No se declararon reglas de negocio adicionales.</p>
-            ) : (
-              <ul className="space-y-1.5 text-xs">
-                {project.business_rules.map((rule, index) => (
-                  <li
-                    key={index}
-                    className="flex items-start space-x-2 bg-slate-50 border border-slate-100 p-2 rounded-lg text-slate-700"
-                  >
-                    <span className="w-1.5 h-1.5 rounded-full bg-slate-400 mt-1.5 flex-shrink-0"></span>
-                    <span>{rule}</span>
-                  </li>
-                ))}
-              </ul>
-            )}
           </div>
 
-          {/* Restricciones */}
-          <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm space-y-3">
-            <div className="flex items-center justify-between">
-              <h3 className="font-semibold text-slate-900 text-xs flex items-center space-x-2">
-                <FileText className="w-4 h-4 text-slate-700" />
-                <span>Restricciones del Proyecto</span>
-              </h3>
-              <span className="text-[11px] text-slate-500 font-medium">
-                {project.constraints.length} declaradas
-              </span>
+          {/* Próximos Pasos en el Ciclo de Vida */}
+          <div className="bg-slate-900 text-slate-200 rounded-xl p-5 shadow-sm space-y-3 text-xs">
+            <div className="flex items-center space-x-2 text-slate-100 font-bold">
+              <Layers className="w-4 h-4 text-emerald-400" />
+              <span>Siguiente Etapa del Ciclo Metodológico</span>
             </div>
+            <p className="text-slate-400 leading-relaxed">
+              Este proyecto cuenta con su registro inicial de entendimiento de negocio. Puedes gestionar
+              versiones inmutables de su contexto y formalizar decisiones analíticas mediante las pestañas superiores.
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1">
+              <div className="p-3 bg-slate-800/80 rounded-lg border border-slate-700">
+                <span className="font-semibold text-emerald-400 block mb-1">M11.3B: Instantáneas y Decisiones</span>
+                <span className="text-[11px] text-slate-400">
+                  Control de versiones append-only del contexto y adopción explícita de alternativas analíticas.
+                </span>
+              </div>
+              <div className="p-3 bg-slate-800/80 rounded-lg border border-slate-700">
+                <span className="font-semibold text-emerald-400 block mb-1">M11.4: Ingesta Bronze y Datos</span>
+                <span className="text-[11px] text-slate-400">
+                  Carga del dataset CSV crudo y perfilado exploratorio automatizado.
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
-            {project.constraints.length === 0 ? (
-              <p className="text-xs text-slate-400 italic">No se declararon restricciones adicionales.</p>
-            ) : (
-              <ul className="space-y-1.5 text-xs">
-                {project.constraints.map((constraint, index) => (
-                  <li
-                    key={index}
-                    className="flex items-start space-x-2 bg-slate-50 border border-slate-100 p-2 rounded-lg text-slate-700"
-                  >
-                    <span className="w-1.5 h-1.5 rounded-full bg-slate-400 mt-1.5 flex-shrink-0"></span>
-                    <span>{constraint}</span>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
+      {/* Contenido de la Pestaña: Instantáneas de Contexto */}
+      {activeTab === 'context' && (
+        <div className="animate-in fade-in duration-150">
+          <ContextTimeline
+            project={project}
+            snapshots={snapshots}
+            isLoading={isLoadingSnapshots}
+            error={snapshotsError}
+            onRetry={fetchSnapshots}
+            onSnapshotCreated={handleSnapshotCreated}
+          />
         </div>
-      </div>
+      )}
 
-      {/* Próximos Pasos en el Ciclo de Vida */}
-      <div className="bg-slate-900 text-slate-200 rounded-xl p-5 shadow-sm space-y-3 text-xs">
-        <div className="flex items-center space-x-2 text-slate-100 font-bold">
-          <Layers className="w-4 h-4 text-emerald-400" />
-          <span>Siguiente Etapa del Ciclo Metodológico</span>
+      {/* Contenido de la Pestaña: Decisiones de Negocio */}
+      {activeTab === 'decisions' && (
+        <div className="animate-in fade-in duration-150">
+          <DecisionList
+            projectId={project.id}
+            decisions={decisions}
+            isLoading={isLoadingDecisions}
+            error={decisionsError}
+            onRetry={fetchDecisions}
+            onDecisionCreated={handleDecisionCreated}
+            defaultDecidedBy={project.owner_id || ''}
+          />
         </div>
-        <p className="text-slate-400 leading-relaxed">
-          Este proyecto ha completado el registro inicial deentendimiento del negocio. Las siguientes
-          capacidades habilitadas en el flujo analítico son:
-        </p>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1">
-          <div className="p-3 bg-slate-800/80 rounded-lg border border-slate-700">
-            <span className="font-semibold text-emerald-400 block mb-1">M11.3B: Instantáneas de Contexto</span>
-            <span className="text-[11px] text-slate-400">
-              Evolución inmutable del entendimiento mediante versiones append-only selladas criptográficamente.
-            </span>
-          </div>
-          <div className="p-3 bg-slate-800/80 rounded-lg border border-slate-700">
-            <span className="font-semibold text-emerald-400 block mb-1">M11.4: Ingesta Bronze y Datos</span>
-            <span className="text-[11px] text-slate-400">
-              Carga del dataset CSV crudo y perfilado exploratorio automatizado.
-            </span>
-          </div>
-        </div>
-      </div>
+      )}
     </div>
   );
 };
