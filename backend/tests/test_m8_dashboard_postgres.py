@@ -11,6 +11,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import sessionmaker
 
 from app.db.models import Artifact, ArtifactLineage, AuditEvent, Execution, Project
+from app.domain.hashing import sha256_canonical
 from app.orchestrator import ProjectOrchestrator
 from app.schemas import (
     ArtifactCreate,
@@ -190,7 +191,7 @@ def test_m8_persists_dashboard_and_lineage_in_postgresql():
         execution = db.get(Execution, input_payload.execution_id)
         assert execution is not None
         assert execution.status == "succeeded"
-        assert execution.output_hash == result["output_hash"]
+        assert execution.output_hash == sha256_canonical(result)
 
         # Verify Artifact in DB
         dashboard_db_art = db.scalars(
@@ -202,6 +203,8 @@ def test_m8_persists_dashboard_and_lineage_in_postgresql():
         assert dashboard_db_art is not None
         assert dashboard_db_art.layer == "report"
         assert dashboard_db_art.produced_by_module == "m8"
+        assert dashboard_db_art.content_hash == result["output_hash"]
+        assert dashboard_ref["content_hash"] == result["output_hash"]
 
         # Verify Lineage in DB
         lineage_entries = list(

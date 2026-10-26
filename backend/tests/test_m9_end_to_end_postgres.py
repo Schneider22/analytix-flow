@@ -15,6 +15,7 @@ from sqlalchemy.orm import sessionmaker
 
 from app.core.config import Settings
 from app.db.models import Approval, Artifact, ArtifactLineage, AuditEvent, Execution, Project
+from app.domain.hashing import sha256_canonical
 from app.main import create_app
 from tests.postgres_support import require_migrated_postgres
 from tests.test_api import context_payload, project_payload
@@ -817,13 +818,24 @@ def test_m9_reproducibility_and_determinism_in_postgresql(pg_env):
 
     assert m2_p1["status"] == "succeeded"
     assert m2_p2["status"] == "succeeded"
-    # Content hash of Bronze dataset is deterministic
-    assert m2_p1["module_output"]["bronze_dataset"]["content_hash"] == m2_p2["module_output"]["bronze_dataset"]["content_hash"]
-    # Profile metrics are identical
+    # Content hash of Source dataset is deterministic across projects
+    assert source1["content_hash"] == source2["content_hash"]
+    # Profile metrics and data characteristics are deterministic across projects
     prof1 = m2_p1["module_output"]["profile_report"]
     prof2 = m2_p2["module_output"]["profile_report"]
     assert prof1["row_count"] == prof2["row_count"] == 100
     assert prof1["column_count"] == prof2["column_count"] == 6
+    assert prof1["columns"] == prof2["columns"]
+    assert prof1["structures"] == prof2["structures"]
+    assert prof1["potential_identifiers"] == prof2["potential_identifiers"]
+    # Project and execution identities are properly isolated and bound to their artifacts
+    assert m2_p1["project_id"] == p1["id"]
+    assert m2_p2["project_id"] == p2["id"]
+    assert m2_p1["project_id"] != m2_p2["project_id"]
+    assert m2_p1["execution_id"] != m2_p2["execution_id"]
+    assert m2_p1["module_output"]["bronze_dataset"]["artifact_id"] == f"bronze-{m2_p1['execution_id']}"
+    assert m2_p2["module_output"]["bronze_dataset"]["artifact_id"] == f"bronze-{m2_p2['execution_id']}"
+    assert m2_p1["module_output"]["bronze_dataset"]["artifact_id"] != m2_p2["module_output"]["bronze_dataset"]["artifact_id"]
 
 
 def test_m9_idempotency_and_replay_in_postgresql(pg_env):
@@ -861,18 +873,22 @@ def test_m9_idempotency_and_replay_in_postgresql(pg_env):
     assert resp1.status_code == 200
     res1 = resp1.json()
 
-    # Replay with same execution_id and idempotency_key
+    # Replay with same execution_id and idempotency_key returns identical response
     resp2 = client.post(f"/api/v1/projects/{proj['id']}/executions/m2", json=payload)
     assert resp2.status_code == 200
     res2 = resp2.json()
 
-    assert res1["output_hash"] == res2["output_hash"]
+    assert res1 == res2
     assert res1["module_output"]["bronze_dataset"]["content_hash"] == res2["module_output"]["bronze_dataset"]["content_hash"]
 
-    # Verify no duplicate execution row in database
+    # Verify exactly one execution record in database and consistency of output_hash
     with session_factory() as session:
         execs = list(session.scalars(select(Execution).where(Execution.id == exec_id)))
         assert len(execs) == 1
+        assert execs[0].status == "succeeded"
+        assert execs[0].output_hash is not None
+        assert execs[0].output_hash == sha256_canonical(execs[0].result_json)
+        assert execs[0].output_hash == sha256_canonical(res1)
 
 
 def test_m9_multiproject_isolation_in_postgresql(pg_env):
