@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { listProjects, getProject, createProject } from './projects';
+import { archiveProject, createProject, getProject, listProjects, restoreProject } from './projects';
 import { ProjectCreate, ProjectRead } from '../types/projects';
 import { ApiError } from './client';
 
@@ -62,6 +62,17 @@ describe('Projects API Client', () => {
 
     await listProjects({ limit: 10, offset: 20 });
     expect(capturedUrl).toContain('/api/v1/projects?limit=10&offset=20');
+  });
+
+  it('listProjects sends the server-backed archive filter', async () => {
+    let capturedUrl = '';
+    globalThis.fetch = vi.fn().mockImplementation((url) => {
+      capturedUrl = String(url);
+      return Promise.resolve(new Response(JSON.stringify([]), { status: 200 }));
+    });
+
+    await listProjects({ archived: 'only' });
+    expect(capturedUrl).toContain('archived=only');
   });
 
   it('getProject fetches single project by id', async () => {
@@ -134,5 +145,19 @@ describe('Projects API Client', () => {
     };
 
     await expect(createProject(payload)).rejects.toThrowError(ApiError);
+  });
+
+  it('archives and restores a project through the lifecycle endpoints', async () => {
+    const captured: string[] = [];
+    globalThis.fetch = vi.fn().mockImplementation((url) => {
+      captured.push(String(url));
+      return Promise.resolve(new Response(JSON.stringify(mockProject), { status: 200 }));
+    });
+
+    await archiveProject('proj-uuid-123', { actor_id: 'operator', reason: 'cleanup' });
+    await restoreProject('proj-uuid-123', { actor_id: 'operator', reason: 'approved restore' });
+
+    expect(captured[0]).toContain('/api/v1/projects/proj-uuid-123/archive');
+    expect(captured[1]).toContain('/api/v1/projects/proj-uuid-123/restore');
   });
 });

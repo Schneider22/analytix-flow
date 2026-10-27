@@ -68,11 +68,76 @@ APPROVAL_SCOPE_BY_ACTION = {
     "approve_test_artifact": "artifact",
 }
 
+ARCHIVED_PROJECT_STATUS = "archived"
+
 
 def require_project(db: Session, project_id: str) -> Project:
     project = projects.get(db, project_id)
     if project is None:
         raise NotFoundError("Project not found")
+    return project
+
+
+def require_editable_project(db: Session, project_id: str) -> Project:
+    project = require_project(db, project_id)
+    if project.status == ARCHIVED_PROJECT_STATUS or project.archived_at is not None:
+        raise ConflictError("Archived projects are read-only")
+    return project
+
+
+def archive_project(db: Session, project_id: str, payload, *, correlation_id: str | None = None) -> Project:
+    project = projects.get_for_update(db, project_id)
+    if project is None:
+        raise NotFoundError("Project not found")
+    if project.status == ARCHIVED_PROJECT_STATUS or project.archived_at is not None:
+        raise ConflictError("Project is already archived")
+
+    previous_status = project.status
+    project.status = ARCHIVED_PROJECT_STATUS
+    project.archived_at = _now()
+    project.archived_from_status = previous_status
+    db.flush()
+    record_audit(
+        db,
+        project_id=project.id,
+        action="project.archived",
+        entity_type="project",
+        entity_id=project.id,
+        actor_id=payload.actor_id,
+        correlation_id=correlation_id,
+        metadata={"previous_status": previous_status, "reason": payload.reason},
+    )
+    commit(db)
+    return project
+
+
+def restore_project(db: Session, project_id: str, payload, *, correlation_id: str | None = None) -> Project:
+    project = projects.get_for_update(db, project_id)
+    if project is None:
+        raise NotFoundError("Project not found")
+    if (
+        project.status != ARCHIVED_PROJECT_STATUS
+        or project.archived_at is None
+        or not project.archived_from_status
+    ):
+        raise ConflictError("Project is not archived")
+
+    restored_status = project.archived_from_status
+    project.status = restored_status
+    project.archived_at = None
+    project.archived_from_status = None
+    db.flush()
+    record_audit(
+        db,
+        project_id=project.id,
+        action="project.restored",
+        entity_type="project",
+        entity_id=project.id,
+        actor_id=payload.actor_id,
+        correlation_id=correlation_id,
+        metadata={"restored_status": restored_status, "reason": payload.reason},
+    )
+    commit(db)
     return project
 
 
@@ -135,6 +200,8 @@ def create_context_snapshot(
     project = projects.get_for_update(db, project_id)
     if project is None:
         raise NotFoundError("Project not found")
+    if project.status == ARCHIVED_PROJECT_STATUS or project.archived_at is not None:
+        raise ConflictError("Archived projects are read-only")
     predecessor = contexts.latest(db, project_id)
     context_data = payload.context.model_dump(mode="json")
     snapshot = ProjectContextSnapshot(
@@ -163,7 +230,7 @@ def create_context_snapshot(
 
 
 def create_decision(db: Session, project_id: str, payload, *, correlation_id: str | None = None) -> Decision:
-    require_project(db, project_id)
+    require_editable_project(db, project_id)
     if payload.selected_option is not None and payload.selected_option not in payload.options:
         raise ValidationError("selected_option must be one of options")
     if payload.status == "decided" and not payload.selected_option:
@@ -226,6 +293,8 @@ def create_artifact(
     project = projects.get_for_update(db, project_id)
     if project is None:
         raise NotFoundError("Project not found")
+    if project.status == ARCHIVED_PROJECT_STATUS or project.archived_at is not None:
+        raise ConflictError("Archived projects are read-only")
     stored = _verified_storage(artifact_store, payload.storage_id, payload.content_hash)
     logical_id = payload.artifact_id or str(uuid4())
     if artifacts.get_by_logical_version(db, project_id, logical_id, payload.artifact_version) is not None:
@@ -329,7 +398,7 @@ def create_approval(
     correlation_id: str | None = None,
     commit_transaction: bool = True,
 ) -> Approval:
-    require_project(db, project_id)
+    require_editable_project(db, project_id)
     scope_type = payload.scope_type or _infer_scope_type(payload)
     expected_scope_type = APPROVAL_SCOPE_BY_ACTION.get(payload.action)
     if expected_scope_type is not None and scope_type != expected_scope_type:
@@ -413,7 +482,7 @@ def create_approval(
 def resolve_approval(
     db: Session, project_id: str, approval_id: str, payload, *, correlation_id: str | None = None
 ) -> Approval:
-    require_project(db, project_id)
+    require_editable_project(db, project_id)
     approval = approvals.get_for_update(db, approval_id)
     if approval is None or approval.project_id != project_id:
         raise NotFoundError("Approval not found for project")

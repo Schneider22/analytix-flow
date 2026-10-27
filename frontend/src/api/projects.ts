@@ -1,5 +1,11 @@
 import { apiClient } from './client';
-import { ProjectCreate, ProjectRead, ListProjectsParams } from '../types/projects';
+import {
+  ProjectArchiveRequest,
+  ProjectCreate,
+  ProjectRead,
+  ProjectRestoreRequest,
+  ListProjectsParams,
+} from '../types/projects';
 
 /**
  * Fetch a paginated list of projects from the backend.
@@ -10,8 +16,31 @@ export async function listProjects(params?: ListProjectsParams): Promise<Project
     params: {
       limit: params?.limit ?? 100,
       offset: params?.offset ?? 0,
+      archived: params?.archived ?? 'exclude',
     },
   });
+}
+
+/** Archive a project without deleting its historical records. */
+export async function archiveProject(
+  projectId: string,
+  payload: ProjectArchiveRequest,
+): Promise<ProjectRead> {
+  return apiClient.post<ProjectRead>(
+    `/projects/${encodeURIComponent(projectId)}/archive`,
+    payload,
+  );
+}
+
+/** Restore a logically archived project. */
+export async function restoreProject(
+  projectId: string,
+  payload: ProjectRestoreRequest,
+): Promise<ProjectRead> {
+  return apiClient.post<ProjectRead>(
+    `/projects/${encodeURIComponent(projectId)}/restore`,
+    payload,
+  );
 }
 
 /**

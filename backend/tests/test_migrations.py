@@ -143,3 +143,18 @@ def test_alembic_runtime_is_required_for_migration_execution():
             f"Missing module: {exc.name}",
             pytrace=False,
         )
+
+
+def test_project_archiving_migration_is_incremental_and_non_destructive():
+    migration = pathlib.Path(__file__).parents[1] / "alembic" / "versions" / "0007_project_archiving.py"
+    text = migration.read_text(encoding="utf-8")
+    assert migration.is_file()
+    assert 'revision: str = "0007_project_archiving"' in text
+    assert 'down_revision: Union[str, None] = "0006_m2_ingestion"' in text
+    assert 'sa.Column("archived_at", sa.DateTime(timezone=True), nullable=True)' in text
+    assert 'sa.Column("archived_from_status", sa.String(length=64), nullable=True)' in text
+    assert 'ARCHIVE_INDEX = "ix_projects_archived_at"' in text
+    assert 'ARCHIVE_STATE_CONSTRAINT = "ck_project_archive_state"' in text
+    assert "Cannot downgrade while archived projects exist" in text
+    assert "DROP TABLE" not in text.upper()
+    assert "DROP SCHEMA" not in text.upper()

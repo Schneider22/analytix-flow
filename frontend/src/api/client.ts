@@ -70,7 +70,9 @@ export class ApiClient {
 
   private buildUrl(path: string, params?: Record<string, string | number | boolean | undefined>): string {
     const cleanPath = path.startsWith('/') ? path : `/${path}`;
-    const url = `${this.baseUrl}${cleanPath}`;
+    const url = cleanPath.startsWith(this.baseUrl)
+      ? cleanPath
+      : `${this.baseUrl}${cleanPath}`;
     if (!params) {
       return url;
     }

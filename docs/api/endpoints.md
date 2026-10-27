@@ -13,8 +13,12 @@ Base path: `/api/v1`
 | Method | Path | Purpose |
 |---|---|---|
 | POST | `/projects` | Creates a project. |
-| GET | `/projects` | Lists projects with `limit` and `offset`. |
+| GET | `/projects` | Lists projects with `limit`, `offset` and `archived=exclude|only|include` (default: `exclude`). |
 | GET | `/projects/{project_id}` | Retrieves one project. |
+| POST | `/projects/{project_id}/archive` | Archives a project logically, preserving all historical relations and recording an immutable audit event. |
+| POST | `/projects/{project_id}/restore` | Restores a logically archived project to its previous status and records an immutable audit event. |
+
+Archived projects remain readable through the detail and historical endpoints, but all project-scoped mutating operations return `409` until the project is restored. Physical deletion is not supported.
 
 ## Context snapshots
 

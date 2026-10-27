@@ -40,7 +40,7 @@ describe('App Component', () => {
     expect(screen.getByText('AnalytixFlow')).toBeInTheDocument();
     expect(screen.getByText('Business Portal')).toBeInTheDocument();
     expect(screen.getByText('Proyectos y Negocio (M1)')).toBeInTheDocument();
-    expect(screen.getByText('Diagnóstico de Salud')).toBeInTheDocument();
+    expect(screen.getByText('Diagnóstico de Servicios')).toBeInTheDocument();
 
     await waitFor(() => {
       expect(screen.getByText('Proyectos Registrados')).toBeInTheDocument();
@@ -48,15 +48,48 @@ describe('App Component', () => {
     });
   });
 
-  it('switches to diagnostics view and displays health status card', async () => {
+  it('keeps status and archive filters synchronized in the API request', async () => {
+    const user = userEvent.setup();
+    vi.mocked(projectsApi.listProjects).mockResolvedValue([mockProject]);
+
+    render(<App />);
+
+    await waitFor(() => expect(screen.getByText('Telco Global')).toBeInTheDocument());
+
+    const statusFilter = screen.getByLabelText(/Filtrar por estado/i);
+    const archiveFilter = screen.getByLabelText(/Filtrar por archivado/i);
+
+    await user.selectOptions(statusFilter, 'archived');
+    await waitFor(() => {
+      expect(projectsApi.listProjects).toHaveBeenLastCalledWith({ archived: 'only' });
+      expect(archiveFilter).toHaveValue('only');
+    });
+
+    await user.selectOptions(statusFilter, 'active');
+    await waitFor(() => {
+      expect(projectsApi.listProjects).toHaveBeenLastCalledWith({ archived: 'exclude' });
+      expect(archiveFilter).toHaveValue('exclude');
+    });
+
+    await user.selectOptions(archiveFilter, 'only');
+    await waitFor(() => expect(statusFilter).toHaveValue('archived'));
+
+    await user.selectOptions(archiveFilter, 'include');
+    await waitFor(() => {
+      expect(projectsApi.listProjects).toHaveBeenLastCalledWith({ archived: 'include' });
+      expect(statusFilter).toHaveValue('all');
+    });
+  });
+
+  it('switches to diagnostics view and displays services status card', async () => {
     const user = userEvent.setup();
     render(<App />);
 
-    const diagButton = screen.getByRole('button', { name: /Diagnóstico de Salud/i });
+    const diagButton = screen.getByRole('button', { name: /Diagnóstico de Servicios/i });
     await user.click(diagButton);
 
     await waitFor(() => {
-      expect(screen.getByText('Portal de Negocio y Gobernanza Analítica')).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: 'Diagnóstico de Servicios' })).toBeInTheDocument();
       expect(screen.getByTestId('status-badge')).toHaveTextContent('Disponible');
     });
 
@@ -73,7 +106,7 @@ describe('App Component', () => {
 
     render(<App />);
 
-    const diagButton = screen.getByRole('button', { name: /Diagnóstico de Salud/i });
+    const diagButton = screen.getByRole('button', { name: /Diagnóstico de Servicios/i });
     await user.click(diagButton);
 
     await waitFor(() => {
@@ -91,7 +124,7 @@ describe('App Component', () => {
 
     render(<App />);
 
-    const diagButton = screen.getByRole('button', { name: /Diagnóstico de Salud/i });
+    const diagButton = screen.getByRole('button', { name: /Diagnóstico de Servicios/i });
     await user.click(diagButton);
 
     await waitFor(() => {

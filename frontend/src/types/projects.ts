@@ -30,11 +30,26 @@ export interface ProjectRead {
   current_phase: string;
   created_at: string;
   updated_at: string;
+  archived_at?: string | null;
+  archived_from_status?: string | null;
 }
+
+export type ProjectArchiveFilter = 'exclude' | 'only' | 'include';
 
 export interface ListProjectsParams {
   limit?: number;
   offset?: number;
+  archived?: ProjectArchiveFilter;
+}
+
+export interface ProjectArchiveRequest {
+  actor_id: string;
+  reason: string;
+}
+
+export interface ProjectRestoreRequest {
+  actor_id: string;
+  reason?: string;
 }
 
 export interface ContextPayload {

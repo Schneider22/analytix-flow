@@ -23,7 +23,7 @@ from .services import (
     commit,
     create_artifact,
     record_audit,
-    require_project,
+    require_editable_project,
 )
 from .storage import ArtifactStore, ArtifactStoreError
 
@@ -63,7 +63,7 @@ class M7GovernanceModule:
         max_metadata_bytes: int,
     ) -> dict[str, Any]:
         self._validate_request(project_id, payload)
-        project = require_project(db, project_id)
+        project = require_editable_project(db, project_id)
         context = db.get(ProjectContextSnapshot, payload.context_snapshot_id)
         if context is None or context.project_id != project_id:
             raise NotFoundError("Context snapshot not found for project")

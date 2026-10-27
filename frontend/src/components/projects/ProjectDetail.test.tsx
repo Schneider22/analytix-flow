@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ProjectDetail } from './ProjectDetail';
@@ -11,6 +11,10 @@ import { ProjectRead, ContextRead, DecisionRead, AuditEventRead } from '../../ty
 describe('ProjectDetail Component', () => {
   beforeEach(() => {
     vi.restoreAllMocks();
+  });
+
+  afterEach(() => {
+    vi.clearAllTimers();
   });
 
   const mockProject: ProjectRead = {
@@ -140,7 +144,7 @@ describe('ProjectDetail Component', () => {
       writable: true,
     });
 
-    render(<ProjectDetail projectId="proj-12345-uuid" onBack={vi.fn()} />);
+    const { unmount } = render(<ProjectDetail projectId="proj-12345-uuid" onBack={vi.fn()} />);
 
     await waitFor(() => {
       expect(screen.getByText('Empresa Detalle S.A.')).toBeInTheDocument();
@@ -150,6 +154,9 @@ describe('ProjectDetail Component', () => {
     await user.click(copyButton);
 
     expect(writeTextMock).toHaveBeenCalledWith('proj-12345-uuid');
+
+    // Desmontar el componente debe limpiar el temporizador activo sin arrojar errores no controlados
+    unmount();
   });
 
   it('displays error and allows retry when getProject fails', async () => {

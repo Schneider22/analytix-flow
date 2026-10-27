@@ -105,16 +105,16 @@ export const ProjectCreateModal: React.FC<ProjectCreateModalProps> = ({
       role="dialog"
       aria-modal="true"
       aria-labelledby="modal-title"
-      className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4"
+      className="fixed inset-0 z-50 overflow-y-auto bg-black/80 backdrop-blur-sm flex items-center justify-center p-4"
     >
-      <div className="bg-white rounded-2xl shadow-xl border border-slate-200 max-w-2xl w-full max-h-[90vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+      <div className="bg-dark-card rounded-2xl shadow-2xl border border-dark-border max-w-2xl w-full max-h-[90vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-150">
         {/* Cabecera del Modal */}
-        <div className="px-6 py-4 border-b border-slate-200 flex items-center justify-between bg-slate-50">
+        <div className="px-6 py-4 border-b border-dark-border flex items-center justify-between bg-dark-secondary">
           <div>
-            <h3 id="modal-title" className="text-base font-bold text-slate-900">
+            <h3 id="modal-title" className="text-base font-bold text-darktext-primary">
               Registrar Nuevo Proyecto Analítico
             </h3>
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-darktext-secondary">
               Fase M1: Entendimiento del Negocio y Definición del Problema
             </p>
           </div>
@@ -122,7 +122,7 @@ export const ProjectCreateModal: React.FC<ProjectCreateModalProps> = ({
             type="button"
             onClick={onClose}
             disabled={isSubmitting}
-            className="text-slate-400 hover:text-slate-600 p-1.5 rounded-lg hover:bg-slate-200 transition-colors"
+            className="text-darktext-secondary hover:text-darktext-primary p-1.5 rounded-lg hover:bg-dark-elevated transition-colors"
             aria-label="Cerrar modal"
           >
             <X className="w-5 h-5" />
@@ -132,11 +132,11 @@ export const ProjectCreateModal: React.FC<ProjectCreateModalProps> = ({
         {/* Cuerpo del Formulario */}
         <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-4 text-xs">
           {submitError && (
-            <div className="p-3 bg-rose-50 border border-rose-200 rounded-lg text-rose-800 flex items-start space-x-2">
-              <AlertTriangle className="w-4 h-4 text-rose-600 flex-shrink-0 mt-0.5" />
+            <div className="p-3 bg-rose-950/30 border border-brand-error/40 rounded-lg text-darktext-primary flex items-start space-x-2">
+              <AlertTriangle className="w-4 h-4 text-brand-error flex-shrink-0 mt-0.5" />
               <div>
-                <p className="font-semibold">Error al registrar el proyecto</p>
-                <p className="text-[11px] font-mono mt-0.5">{submitError}</p>
+                <p className="font-semibold text-brand-error">Error al registrar el proyecto</p>
+                <p className="text-[11px] font-mono mt-0.5 text-rose-300">{submitError}</p>
               </div>
             </div>
           )}
@@ -144,8 +144,8 @@ export const ProjectCreateModal: React.FC<ProjectCreateModalProps> = ({
           {/* Empresa, Responsable y Organización */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             <div>
-              <label htmlFor="company-name" className="block font-semibold text-slate-700 mb-1">
-                Nombre de la Empresa <span className="text-rose-500">*</span>
+              <label htmlFor="company-name" className="block font-semibold text-darktext-primary mb-1">
+                Nombre de la Empresa <span className="text-brand-error">*</span>
               </label>
               <input
                 id="company-name"
@@ -154,15 +154,15 @@ export const ProjectCreateModal: React.FC<ProjectCreateModalProps> = ({
                 onChange={(e) => setCompanyName(e.target.value)}
                 placeholder="Ej. TelcoGlobal Synthetic Services"
                 maxLength={255}
-                className="w-full text-xs rounded-lg border border-slate-300 px-3 py-2 text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                className="w-full text-xs rounded-lg border border-dark-border bg-dark-elevated px-3 py-2 text-darktext-primary placeholder-darktext-secondary/50 focus:outline-none focus:ring-1 focus:ring-brand-emerald focus:border-brand-emerald transition-colors"
               />
               {fieldErrors.companyName && (
-                <p className="text-[11px] text-rose-600 mt-1">{fieldErrors.companyName}</p>
+                <p className="text-[11px] text-brand-error mt-1">{fieldErrors.companyName}</p>
               )}
             </div>
 
             <div>
-              <label htmlFor="owner-id" className="block font-semibold text-slate-700 mb-1">
+              <label htmlFor="owner-id" className="block font-semibold text-darktext-primary mb-1">
                 Responsable (Owner ID)
               </label>
               <input
@@ -172,12 +172,12 @@ export const ProjectCreateModal: React.FC<ProjectCreateModalProps> = ({
                 onChange={(e) => setOwnerId(e.target.value)}
                 placeholder="Ej. lead-data-scientist"
                 maxLength={128}
-                className="w-full text-xs rounded-lg border border-slate-300 px-3 py-2 text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                className="w-full text-xs rounded-lg border border-dark-border bg-dark-elevated px-3 py-2 text-darktext-primary placeholder-darktext-secondary/50 focus:outline-none focus:ring-1 focus:ring-brand-emerald focus:border-brand-emerald transition-colors"
               />
             </div>
 
             <div>
-              <label htmlFor="organization-id" className="block font-semibold text-slate-700 mb-1">
+              <label htmlFor="organization-id" className="block font-semibold text-darktext-primary mb-1">
                 Organización (Org ID)
               </label>
               <input
@@ -187,15 +187,15 @@ export const ProjectCreateModal: React.FC<ProjectCreateModalProps> = ({
                 onChange={(e) => setOrganizationId(e.target.value)}
                 placeholder="Ej. org-synthetic-01"
                 maxLength={128}
-                className="w-full text-xs rounded-lg border border-slate-300 px-3 py-2 text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                className="w-full text-xs rounded-lg border border-dark-border bg-dark-elevated px-3 py-2 text-darktext-primary placeholder-darktext-secondary/50 focus:outline-none focus:ring-1 focus:ring-brand-emerald focus:border-brand-emerald transition-colors"
               />
             </div>
           </div>
 
           {/* Descripción de la Empresa */}
           <div>
-            <label htmlFor="company-description" className="block font-semibold text-slate-700 mb-1">
-              Descripción de la Empresa <span className="text-rose-500">*</span>
+            <label htmlFor="company-description" className="block font-semibold text-darktext-primary mb-1">
+              Descripción de la Empresa <span className="text-brand-error">*</span>
             </label>
             <textarea
               id="company-description"
@@ -204,17 +204,17 @@ export const ProjectCreateModal: React.FC<ProjectCreateModalProps> = ({
               onChange={(e) => setCompanyDescription(e.target.value)}
               placeholder="Actividad principal, industria, modelo operativo..."
               maxLength={10000}
-              className="w-full text-xs rounded-lg border border-slate-300 px-3 py-2 text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              className="w-full text-xs rounded-lg border border-dark-border bg-dark-elevated px-3 py-2 text-darktext-primary placeholder-darktext-secondary/50 focus:outline-none focus:ring-1 focus:ring-brand-emerald focus:border-brand-emerald transition-colors"
             />
             {fieldErrors.companyDescription && (
-              <p className="text-[11px] text-rose-600 mt-0.5">{fieldErrors.companyDescription}</p>
+              <p className="text-[11px] text-brand-error mt-0.5">{fieldErrors.companyDescription}</p>
             )}
           </div>
 
           {/* Necesidad de Negocio */}
           <div>
-            <label htmlFor="business-need" className="block font-semibold text-slate-700 mb-1">
-              Necesidad o Problema de Negocio <span className="text-rose-500">*</span>
+            <label htmlFor="business-need" className="block font-semibold text-darktext-primary mb-1">
+              Necesidad o Problema de Negocio <span className="text-brand-error">*</span>
             </label>
             <textarea
               id="business-need"
@@ -223,17 +223,17 @@ export const ProjectCreateModal: React.FC<ProjectCreateModalProps> = ({
               onChange={(e) => setBusinessNeed(e.target.value)}
               placeholder="¿Qué problema operativo o estratégico se busca resolver?"
               maxLength={10000}
-              className="w-full text-xs rounded-lg border border-slate-300 px-3 py-2 text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              className="w-full text-xs rounded-lg border border-dark-border bg-dark-elevated px-3 py-2 text-darktext-primary placeholder-darktext-secondary/50 focus:outline-none focus:ring-1 focus:ring-brand-emerald focus:border-brand-emerald transition-colors"
             />
             {fieldErrors.businessNeed && (
-              <p className="text-[11px] text-rose-600 mt-0.5">{fieldErrors.businessNeed}</p>
+              <p className="text-[11px] text-brand-error mt-0.5">{fieldErrors.businessNeed}</p>
             )}
           </div>
 
           {/* Objetivo Esperado */}
           <div>
-            <label htmlFor="expected-objective" className="block font-semibold text-slate-700 mb-1">
-              Objetivo Esperado <span className="text-rose-500">*</span>
+            <label htmlFor="expected-objective" className="block font-semibold text-darktext-primary mb-1">
+              Objetivo Esperado <span className="text-brand-error">*</span>
             </label>
             <textarea
               id="expected-objective"
@@ -242,15 +242,15 @@ export const ProjectCreateModal: React.FC<ProjectCreateModalProps> = ({
               onChange={(e) => setExpectedObjective(e.target.value)}
               placeholder="¿Cuál es el resultado analítico esperado para orientar la toma de decisiones?"
               maxLength={10000}
-              className="w-full text-xs rounded-lg border border-slate-300 px-3 py-2 text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              className="w-full text-xs rounded-lg border border-dark-border bg-dark-elevated px-3 py-2 text-darktext-primary placeholder-darktext-secondary/50 focus:outline-none focus:ring-1 focus:ring-brand-emerald focus:border-brand-emerald transition-colors"
             />
             {fieldErrors.expectedObjective && (
-              <p className="text-[11px] text-rose-600 mt-0.5">{fieldErrors.expectedObjective}</p>
+              <p className="text-[11px] text-brand-error mt-0.5">{fieldErrors.expectedObjective}</p>
             )}
           </div>
 
           {/* Criterios de Éxito (Obligatorio, min 1) */}
-          <div className="pt-2 border-t border-slate-100">
+          <div className="pt-2 border-t border-dark-border/60">
             <StringListInput
               id="success-criteria-input"
               label="Criterios de Éxito Medibles"
@@ -265,7 +265,7 @@ export const ProjectCreateModal: React.FC<ProjectCreateModalProps> = ({
           </div>
 
           {/* Reglas de Negocio (Opcional) */}
-          <div className="pt-2 border-t border-slate-100">
+          <div className="pt-2 border-t border-dark-border/60">
             <StringListInput
               id="business-rules-input"
               label="Reglas de Negocio"
@@ -277,7 +277,7 @@ export const ProjectCreateModal: React.FC<ProjectCreateModalProps> = ({
           </div>
 
           {/* Restricciones (Opcional) */}
-          <div className="pt-2 border-t border-slate-100">
+          <div className="pt-2 border-t border-dark-border/60">
             <StringListInput
               id="constraints-input"
               label="Restricciones Técnicas u Operativas"
@@ -289,19 +289,19 @@ export const ProjectCreateModal: React.FC<ProjectCreateModalProps> = ({
           </div>
 
           {/* Pie y Botones */}
-          <div className="pt-4 border-t border-slate-200 flex items-center justify-end space-x-3">
+          <div className="pt-4 border-t border-dark-border flex items-center justify-end space-x-3">
             <button
               type="button"
               onClick={onClose}
               disabled={isSubmitting}
-              className="px-4 py-2 text-xs font-semibold rounded-lg text-slate-700 bg-slate-100 hover:bg-slate-200 disabled:opacity-50 transition-colors"
+              className="px-4 py-2 text-xs font-semibold rounded-lg text-darktext-secondary bg-dark-elevated border border-dark-border hover:text-darktext-primary hover:bg-dark-border disabled:opacity-50 transition-colors"
             >
               Cancelar
             </button>
             <button
               type="submit"
               disabled={isSubmitting}
-              className="inline-flex items-center space-x-1.5 px-4 py-2 text-xs font-semibold rounded-lg text-white bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 transition-colors shadow-sm"
+              className="inline-flex items-center space-x-1.5 px-4 py-2 text-xs font-bold rounded-lg text-dark-primary bg-brand-emerald hover:bg-brand-emeraldHover disabled:opacity-50 transition-colors shadow-sm shadow-emerald-950/40"
             >
               {isSubmitting ? (
                 <>

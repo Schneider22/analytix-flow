@@ -28,6 +28,18 @@ class ProjectRead(ProjectCreate):
     current_phase: str
     created_at: datetime
     updated_at: datetime
+    archived_at: datetime | None
+    archived_from_status: str | None
+
+
+class ProjectArchiveRequest(StrictModel):
+    actor_id: str = Field(min_length=1, max_length=128)
+    reason: str = Field(min_length=1, max_length=10000)
+
+
+class ProjectRestoreRequest(StrictModel):
+    actor_id: str = Field(min_length=1, max_length=128)
+    reason: str | None = Field(default=None, max_length=10000)
 
 
 class ContextPayload(StrictModel):

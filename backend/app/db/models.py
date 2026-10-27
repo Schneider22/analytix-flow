@@ -32,6 +32,13 @@ def utc_now() -> datetime:
 
 class Project(Base):
     __tablename__ = "projects"
+    __table_args__ = (
+        CheckConstraint(
+            "(status = 'archived' AND archived_at IS NOT NULL AND archived_from_status IS NOT NULL) "
+            "OR (status <> 'archived' AND archived_at IS NULL AND archived_from_status IS NULL)",
+            name="ck_project_archive_state",
+        ),
+    )
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
     organization_id: Mapped[str | None] = mapped_column(String(128), nullable=True)
@@ -47,6 +54,8 @@ class Project(Base):
     current_phase: Mapped[str] = mapped_column(String(64), nullable=False, default="business_understanding")
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, default=utc_now)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, default=utc_now, onupdate=utc_now)
+    archived_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    archived_from_status: Mapped[str | None] = mapped_column(String(64), nullable=True)
 
     context_snapshots: Mapped[list[ProjectContextSnapshot]] = relationship(
         back_populates="project", order_by="ProjectContextSnapshot.version"

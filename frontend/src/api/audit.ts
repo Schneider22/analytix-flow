@@ -9,5 +9,5 @@ export async function listAuditEvents(projectId: string): Promise<AuditEventRead
   if (!projectId || !projectId.trim()) {
     throw new Error('projectId es obligatorio para consultar la pista de auditoría');
   }
-  return apiClient.get<AuditEventRead[]>(`/api/v1/projects/${encodeURIComponent(projectId)}/audit`);
+  return apiClient.get<AuditEventRead[]>(`/projects/${encodeURIComponent(projectId.trim())}/audit`);
 }

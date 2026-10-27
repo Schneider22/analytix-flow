@@ -65,6 +65,111 @@ def test_create_get_and_list_project(client):
     assert [item["id"] for item in listed] == [project["id"]]
 
 
+def test_project_archiving_filters_audit_and_restore(client):
+    project = create_project(client)
+    project_id = project["id"]
+
+    archived = client.post(
+        f"/api/v1/projects/{project_id}/archive",
+        headers={"X-Correlation-ID": "archive-correlation-001"},
+        json={"actor_id": "operator", "reason": "Synthetic lifecycle test"},
+    )
+    assert archived.status_code == 200
+    assert archived.json()["status"] == "archived"
+    assert archived.json()["archived_at"] is not None
+    assert archived.json()["archived_from_status"] == "draft"
+
+    assert client.get("/api/v1/projects").json() == []
+    assert [item["id"] for item in client.get("/api/v1/projects", params={"archived": "only"}).json()] == [project_id]
+    assert [item["id"] for item in client.get("/api/v1/projects", params={"archived": "include"}).json()] == [project_id]
+
+    archive_audit = client.get(f"/api/v1/projects/{project_id}/audit").json()
+    archive_event = next(item for item in archive_audit if item["action"] == "project.archived")
+    assert archive_event["actor_id"] == "operator"
+    assert archive_event["correlation_id"] == "archive-correlation-001"
+    assert archive_event["metadata"]["previous_status"] == "draft"
+
+    repeated_archive = client.post(
+        f"/api/v1/projects/{project_id}/archive",
+        json={"actor_id": "operator", "reason": "Must be rejected"},
+    )
+    assert repeated_archive.status_code == 409
+    assert len([item for item in client.get(f"/api/v1/projects/{project_id}/audit").json() if item["action"] == "project.archived"]) == 1
+
+    restored = client.post(
+        f"/api/v1/projects/{project_id}/restore",
+        json={"actor_id": "operator", "reason": "Synthetic restore test"},
+    )
+    assert restored.status_code == 200
+    assert restored.json()["status"] == "draft"
+    assert restored.json()["archived_at"] is None
+    assert restored.json()["archived_from_status"] is None
+    assert [item["id"] for item in client.get("/api/v1/projects").json()] == [project_id]
+    assert any(item["action"] == "project.restored" for item in client.get(f"/api/v1/projects/{project_id}/audit").json())
+
+    repeated_restore = client.post(
+        f"/api/v1/projects/{project_id}/restore",
+        json={"actor_id": "operator"},
+    )
+    assert repeated_restore.status_code == 409
+
+
+def test_archived_project_preserves_history_and_blocks_mutations(client):
+    project = create_project(client)
+    project_id = project["id"]
+    context = client.post(f"/api/v1/projects/{project_id}/context", json=context_payload("before-archive"))
+    assert context.status_code == 201
+    decision = client.post(
+        f"/api/v1/projects/{project_id}/decisions",
+        json={
+            "decision_type": "select_alternative",
+            "question": "Which alternative should proceed?",
+            "options": ["alternative-a", "alternative-b"],
+            "status": "pending",
+        },
+    )
+    assert decision.status_code == 201
+    artifact = client.post(
+        f"/api/v1/projects/{project_id}/artifacts", json=artifact_payload(client.app, artifact_id="history", version="v1")
+    )
+    assert artifact.status_code == 201
+    approval = client.post(
+        f"/api/v1/projects/{project_id}/approvals",
+        json={"action": "select_alternative", "requested_by": "operator"},
+    )
+    assert approval.status_code == 201
+
+    archived = client.post(
+        f"/api/v1/projects/{project_id}/archive",
+        json={"actor_id": "operator", "reason": "Protect history"},
+    )
+    assert archived.status_code == 200
+
+    assert len(client.get(f"/api/v1/projects/{project_id}/context").json()) == 1
+    assert len(client.get(f"/api/v1/projects/{project_id}/decisions").json()) == 1
+    assert len(client.get(f"/api/v1/projects/{project_id}/artifacts").json()) == 1
+    assert len(client.get(f"/api/v1/projects/{project_id}/approvals").json()) == 1
+    assert len(client.get(f"/api/v1/projects/{project_id}/audit").json()) >= 5
+
+    blocked_context = client.post(f"/api/v1/projects/{project_id}/context", json=context_payload("blocked"))
+    blocked_decision = client.post(
+        f"/api/v1/projects/{project_id}/decisions",
+        json={"decision_type": "test", "question": "Blocked?", "options": ["yes"]},
+    )
+    blocked_artifact = client.post(
+        f"/api/v1/projects/{project_id}/artifacts", json=artifact_payload(client.app, artifact_id="blocked", version="v1")
+    )
+    blocked_content = client.post(
+        f"/api/v1/projects/{project_id}/artifacts/content?artifact_type=source&artifact_version=v1&artifact_id=blocked-content",
+        content=b"blocked",
+    )
+    blocked_approval = client.post(
+        f"/api/v1/projects/{project_id}/approvals",
+        json={"action": "select_alternative", "requested_by": "operator"},
+    )
+    assert [response.status_code for response in (blocked_context, blocked_decision, blocked_artifact, blocked_content, blocked_approval)] == [409, 409, 409, 409, 409]
+
+
 def test_context_versions_are_append_only(client):
     project = create_project(client)
     first = client.post(f"/api/v1/projects/{project['id']}/context", json=context_payload("v1"))

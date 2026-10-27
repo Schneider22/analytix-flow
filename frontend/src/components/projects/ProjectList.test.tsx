@@ -82,6 +82,7 @@ describe('ProjectList Component', () => {
 
   it('filters projects by status and shows empty state when no matches found', async () => {
     const user = userEvent.setup();
+    const onArchiveFilterChange = vi.fn();
 
     render(
       <ProjectList
@@ -91,6 +92,8 @@ describe('ProjectList Component', () => {
         onRefresh={vi.fn()}
         onSelectProject={vi.fn()}
         onOpenCreateModal={vi.fn()}
+        archiveFilter="exclude"
+        onArchiveFilterChange={onArchiveFilterChange}
       />
     );
 
@@ -99,6 +102,7 @@ describe('ProjectList Component', () => {
 
     expect(screen.getByTestId('project-list-filtered-empty')).toBeInTheDocument();
     expect(screen.getByText('No se encontraron proyectos coincidentes')).toBeInTheDocument();
+    expect(onArchiveFilterChange).toHaveBeenLastCalledWith('only');
 
     // Clear filters
     const clearBtn = screen.getByRole('button', { name: /Limpiar filtros/i });
@@ -106,6 +110,33 @@ describe('ProjectList Component', () => {
 
     expect(screen.getByText('Empresa Alfa Telecom')).toBeInTheDocument();
     expect(screen.getByText('Banco Beta Financiero')).toBeInTheDocument();
+    expect(onArchiveFilterChange).toHaveBeenLastCalledWith('exclude');
+  });
+
+  it('resets the archive scope when leaving the archived status', async () => {
+    const user = userEvent.setup();
+    const onArchiveFilterChange = vi.fn();
+
+    render(
+      <ProjectList
+        projects={mockProjects}
+        isLoading={false}
+        errorMessage={null}
+        onRefresh={vi.fn()}
+        onSelectProject={vi.fn()}
+        onOpenCreateModal={vi.fn()}
+        archiveFilter="only"
+        onArchiveFilterChange={onArchiveFilterChange}
+      />
+    );
+
+    const statusFilter = screen.getByLabelText(/Filtrar por estado/i);
+
+    await user.selectOptions(statusFilter, 'archived');
+    expect(onArchiveFilterChange).toHaveBeenLastCalledWith('only');
+
+    await user.selectOptions(statusFilter, 'active');
+    expect(onArchiveFilterChange).toHaveBeenLastCalledWith('exclude');
   });
 
   it('renders empty state when projects array is empty', () => {
@@ -122,6 +153,27 @@ describe('ProjectList Component', () => {
 
     expect(screen.getByTestId('project-list-empty')).toBeInTheDocument();
     expect(screen.getByText('No hay proyectos registrados aún')).toBeInTheDocument();
+  });
+
+  it('delegates the archive filter to the API-backed parent state', async () => {
+    const user = userEvent.setup();
+    const onArchiveFilterChange = vi.fn();
+
+    render(
+      <ProjectList
+        projects={mockProjects}
+        isLoading={false}
+        errorMessage={null}
+        onRefresh={vi.fn()}
+        onSelectProject={vi.fn()}
+        onOpenCreateModal={vi.fn()}
+        archiveFilter="exclude"
+        onArchiveFilterChange={onArchiveFilterChange}
+      />
+    );
+
+    await user.selectOptions(screen.getByLabelText(/Filtrar por archivado/i), 'only');
+    expect(onArchiveFilterChange).toHaveBeenCalledWith('only');
   });
 
   it('renders loading state when isLoading is true', () => {

@@ -24,17 +24,17 @@ export const StatusCard: React.FC<StatusCardProps> = ({
   const isUnavailable = status === 'unavailable';
 
   return (
-    <div className="bg-white border border-slate-200 rounded-xl shadow-sm p-6 max-w-xl w-full">
-      <div className="flex items-center justify-between pb-4 border-b border-slate-100">
+    <div className="bg-dark-card border border-dark-border rounded-xl shadow-lg p-6 max-w-xl w-full">
+      <div className="flex items-center justify-between pb-4 border-b border-dark-border">
         <div className="flex items-center space-x-3">
-          <div className="p-2 rounded-lg bg-slate-100 text-slate-700">
-            {isChecking && <RefreshCw className="w-5 h-5 animate-spin text-blue-600" data-testid="icon-checking" />}
-            {isAvailable && <CheckCircle2 className="w-5 h-5 text-emerald-600" data-testid="icon-available" />}
-            {isUnavailable && <XCircle className="w-5 h-5 text-rose-600" data-testid="icon-unavailable" />}
+          <div className="p-2 rounded-lg bg-dark-elevated border border-dark-border">
+            {isChecking && <RefreshCw className="w-5 h-5 animate-spin text-brand-turquoise" data-testid="icon-checking" />}
+            {isAvailable && <CheckCircle2 className="w-5 h-5 text-brand-emerald" data-testid="icon-available" />}
+            {isUnavailable && <XCircle className="w-5 h-5 text-brand-error" data-testid="icon-unavailable" />}
           </div>
           <div>
-            <h3 className="font-semibold text-slate-900 text-base">Estado del Servicio Backend</h3>
-            <p className="text-xs text-slate-500">
+            <h3 className="font-semibold text-darktext-primary text-base">Estado del Servicio Backend</h3>
+            <p className="text-xs text-darktext-secondary">
               Conexión directa con la API REST (FastAPI + PostgreSQL)
             </p>
           </div>
@@ -44,7 +44,7 @@ export const StatusCard: React.FC<StatusCardProps> = ({
           {isChecking && (
             <span
               data-testid="status-badge"
-              className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200"
+              className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-cyan-950/70 text-brand-turquoise border border-cyan-700/50"
             >
               Comprobando
             </span>
@@ -52,7 +52,7 @@ export const StatusCard: React.FC<StatusCardProps> = ({
           {isAvailable && (
             <span
               data-testid="status-badge"
-              className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200"
+              className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-950/70 text-brand-emerald border border-emerald-700/50"
             >
               Disponible
             </span>
@@ -60,7 +60,7 @@ export const StatusCard: React.FC<StatusCardProps> = ({
           {isUnavailable && (
             <span
               data-testid="status-badge"
-              className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-rose-50 text-rose-700 border border-rose-200"
+              className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-rose-950/70 text-brand-error border border-rose-800/50"
             >
               No disponible
             </span>
@@ -70,27 +70,27 @@ export const StatusCard: React.FC<StatusCardProps> = ({
 
       <div className="py-4 space-y-3">
         {isChecking && (
-          <div className="text-sm text-slate-600 flex items-center space-x-2">
-            <span className="w-2 h-2 rounded-full bg-blue-500 animate-ping"></span>
-            <span>Consultando endpoint <code>GET /api/v1/health</code>...</span>
+          <div className="text-sm text-darktext-secondary flex items-center space-x-2">
+            <span className="w-2 h-2 rounded-full bg-brand-turquoise animate-ping"></span>
+            <span>Consultando endpoint <code className="text-brand-turquoise font-mono bg-dark-elevated px-1.5 py-0.5 rounded border border-dark-border">GET /api/v1/health</code>...</span>
           </div>
         )}
 
         {isAvailable && healthData && (
           <div className="grid grid-cols-2 gap-3 text-sm">
-            <div className="bg-slate-50 p-3 rounded-lg border border-slate-100">
-              <span className="text-xs text-slate-500 block">Servicio API</span>
-              <span className="font-medium text-slate-800 capitalize flex items-center space-x-1 mt-0.5">
-                <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block"></span>
+            <div className="bg-dark-elevated p-3 rounded-lg border border-dark-border">
+              <span className="text-xs text-darktext-secondary block">Servicio API</span>
+              <span className="font-medium text-darktext-primary capitalize flex items-center space-x-1.5 mt-0.5">
+                <span className="w-2 h-2 rounded-full bg-brand-emerald inline-block"></span>
                 <span>{healthData.status}</span>
               </span>
             </div>
-            <div className="bg-slate-50 p-3 rounded-lg border border-slate-100">
-              <span className="text-xs text-slate-500 block">Base de Datos</span>
-              <span className="font-medium text-slate-800 capitalize flex items-center space-x-1 mt-0.5">
+            <div className="bg-dark-elevated p-3 rounded-lg border border-dark-border">
+              <span className="text-xs text-darktext-secondary block">Base de Datos</span>
+              <span className="font-medium text-darktext-primary capitalize flex items-center space-x-1.5 mt-0.5">
                 <span
                   className={`w-2 h-2 rounded-full inline-block ${
-                    healthData.database === 'ok' ? 'bg-emerald-500' : 'bg-amber-500'
+                    healthData.database === 'ok' ? 'bg-brand-emerald' : 'bg-brand-warning'
                   }`}
                 ></span>
                 <span>{healthData.database}</span>
@@ -100,35 +100,35 @@ export const StatusCard: React.FC<StatusCardProps> = ({
         )}
 
         {isUnavailable && (
-          <div className="bg-rose-50 border border-rose-200 p-3.5 rounded-lg text-sm text-rose-800 space-y-1">
-            <div className="flex items-center space-x-2 font-medium">
-              <AlertTriangle className="w-4 h-4 text-rose-600 flex-shrink-0" />
+          <div className="bg-rose-950/30 border border-brand-error/40 p-3.5 rounded-lg text-sm text-darktext-primary space-y-1">
+            <div className="flex items-center space-x-2 font-medium text-brand-error">
+              <AlertTriangle className="w-4 h-4 flex-shrink-0" />
               <span>No se pudo comunicar con el backend</span>
             </div>
             {errorMessage && (
-              <p className="text-xs text-rose-700 font-mono break-all pt-1 pl-6">
+              <p className="text-xs text-rose-300 font-mono break-all pt-1 pl-6">
                 {errorMessage}
               </p>
             )}
-            <p className="text-xs text-rose-600 pt-1 pl-6">
-              Asegúrate de que el servidor FastAPI esté iniciado en <code>http://127.0.0.1:8000</code>.
+            <p className="text-xs text-darktext-secondary pt-1 pl-6">
+              Asegúrate de que el servidor FastAPI esté iniciado en <code className="text-brand-turquoise font-mono bg-dark-elevated px-1 py-0.5 rounded">http://127.0.0.1:8000</code>.
             </p>
           </div>
         )}
 
         {lastChecked && (
-          <p className="text-xs text-slate-400">
+          <p className="text-xs text-darktext-secondary/70">
             Última verificación: {lastChecked.toLocaleTimeString()}
           </p>
         )}
       </div>
 
-      <div className="pt-3 border-t border-slate-100 flex justify-end">
+      <div className="pt-3 border-t border-dark-border flex justify-end">
         <button
           type="button"
           onClick={onRetry}
           disabled={isChecking}
-          className="inline-flex items-center space-x-2 px-3.5 py-2 text-xs font-medium rounded-lg text-slate-700 bg-slate-100 hover:bg-slate-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          className="inline-flex items-center space-x-2 px-3.5 py-2 text-xs font-semibold rounded-lg text-darktext-primary bg-dark-elevated hover:bg-dark-border disabled:opacity-50 disabled:cursor-not-allowed transition-colors border border-dark-border"
         >
           <RefreshCw className={`w-3.5 h-3.5 ${isChecking ? 'animate-spin' : ''}`} />
           <span>Reintentar comprobación</span>

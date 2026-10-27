@@ -18,11 +18,22 @@ class ProjectRepository:
     def get_for_update(self, db: Session, project_id: str) -> Project | None:
         return db.scalar(select(Project).where(Project.id == project_id).with_for_update())
 
-    def list(self, db: Session, *, limit: int, offset: int) -> list[Project]:
+    def list(
+        self,
+        db: Session,
+        *,
+        limit: int,
+        offset: int,
+        archived: str = "exclude",
+    ) -> list[Project]:
+        statement = select(Project)
+        if archived == "exclude":
+            statement = statement.where(Project.archived_at.is_(None))
+        elif archived == "only":
+            statement = statement.where(Project.archived_at.is_not(None))
+
         return list(
-            db.scalars(
-                select(Project).order_by(desc(Project.created_at)).limit(limit).offset(offset)
-            )
+            db.scalars(statement.order_by(desc(Project.created_at)).limit(limit).offset(offset))
         )
 
 

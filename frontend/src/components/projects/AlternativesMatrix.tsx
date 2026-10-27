@@ -75,19 +75,19 @@ export const AlternativesMatrix: React.FC<AlternativesMatrixProps> = ({
     switch (complexity) {
       case 'Baja':
         return (
-          <span className="px-2 py-0.5 text-[10px] font-semibold rounded bg-emerald-100 text-emerald-800">
+          <span className="px-2 py-0.5 text-[10px] font-semibold rounded bg-emerald-950/70 text-brand-emerald border border-emerald-700/50">
             Baja
           </span>
         );
       case 'Media':
         return (
-          <span className="px-2 py-0.5 text-[10px] font-semibold rounded bg-amber-100 text-amber-800">
+          <span className="px-2 py-0.5 text-[10px] font-semibold rounded bg-amber-950/70 text-brand-warning border border-amber-700/50">
             Media
           </span>
         );
       case 'Alta':
         return (
-          <span className="px-2 py-0.5 text-[10px] font-semibold rounded bg-rose-100 text-rose-800">
+          <span className="px-2 py-0.5 text-[10px] font-semibold rounded bg-rose-950/70 text-brand-error border border-rose-800/50">
             Alta
           </span>
         );
@@ -98,19 +98,19 @@ export const AlternativesMatrix: React.FC<AlternativesMatrixProps> = ({
     switch (level) {
       case 'Alto':
         return (
-          <span className="px-2 py-0.5 text-[10px] font-semibold rounded bg-emerald-100 text-emerald-800 border border-emerald-200">
+          <span className="px-2 py-0.5 text-[10px] font-semibold rounded bg-emerald-950/70 text-brand-emerald border border-emerald-700/50">
             Evidencia Alta
           </span>
         );
       case 'Medio':
         return (
-          <span className="px-2 py-0.5 text-[10px] font-semibold rounded bg-blue-100 text-blue-800 border border-blue-200">
+          <span className="px-2 py-0.5 text-[10px] font-semibold rounded bg-cyan-950/70 text-brand-turquoise border border-cyan-700/50">
             Evidencia Media
           </span>
         );
       case 'Preliminar':
         return (
-          <span className="px-2 py-0.5 text-[10px] font-semibold rounded bg-purple-100 text-purple-800 border border-purple-200">
+          <span className="px-2 py-0.5 text-[10px] font-semibold rounded bg-dark-elevated text-darktext-secondary border border-dark-border">
             Evidencia Preliminar
           </span>
         );
@@ -120,17 +120,17 @@ export const AlternativesMatrix: React.FC<AlternativesMatrixProps> = ({
   return (
     <div className="space-y-6">
       {/* Encabezado */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-slate-200">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-dark-border">
         <div>
           <div className="flex items-center space-x-2">
-            <h3 className="text-base font-bold text-slate-900">
+            <h3 className="text-base font-bold text-darktext-primary">
               Matriz Comparativa de Alternativas Analíticas (M1)
             </h3>
-            <span className="px-2 py-0.5 text-xs font-semibold rounded-full bg-slate-100 text-slate-700 border border-slate-200">
+            <span className="px-2 py-0.5 text-xs font-semibold rounded-full bg-dark-elevated text-brand-emerald border border-dark-border">
               3 alternativas
             </span>
           </div>
-          <p className="text-xs text-slate-500 mt-1">
+          <p className="text-xs text-darktext-secondary mt-1">
             Evaluación técnica cualitativa y evidencia empírica sustentada para la resolución del problema de negocio.
           </p>
         </div>
@@ -139,7 +139,7 @@ export const AlternativesMatrix: React.FC<AlternativesMatrixProps> = ({
           <button
             type="button"
             onClick={onOpenDecisionModal}
-            className="inline-flex items-center space-x-1.5 px-3.5 py-2 text-xs font-semibold rounded-lg text-white bg-indigo-600 hover:bg-indigo-700 transition-colors shadow-sm self-start sm:self-auto"
+            className="inline-flex items-center space-x-1.5 px-3.5 py-2 text-xs font-bold rounded-lg text-dark-primary bg-brand-emerald hover:bg-brand-emeraldHover transition-colors shadow-sm shadow-emerald-950/40 self-start sm:self-auto"
           >
             <Sparkles className="w-3.5 h-3.5" />
             <span>Formalizar Selección</span>
@@ -148,8 +148,8 @@ export const AlternativesMatrix: React.FC<AlternativesMatrixProps> = ({
       </div>
 
       {/* Nota de rigor metodológico */}
-      <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-700 text-xs flex items-start space-x-2.5">
-        <Info className="w-4 h-4 text-slate-500 flex-shrink-0 mt-0.5" />
+      <div className="p-3 bg-dark-card border border-dark-border rounded-xl text-darktext-secondary text-xs flex items-start space-x-2.5">
+        <Info className="w-4 h-4 text-brand-turquoise flex-shrink-0 mt-0.5" />
         <p className="text-[11px] leading-relaxed">
           Conforme a los lineamientos rectores de AnalytixFlow, las alternativas se comparan por idoneidad,
           complejidad orientativa y nivel de evidencia empírica documentada. No se presentan porcentajes de
@@ -161,25 +161,25 @@ export const AlternativesMatrix: React.FC<AlternativesMatrixProps> = ({
       {alternativeDecision && (
         <div
           data-testid="adopted-alternative-banner"
-          className="p-4 bg-emerald-50 border border-emerald-200 rounded-xl flex items-start space-x-3 text-xs text-emerald-950"
+          className="p-4 bg-emerald-950/40 border border-brand-emerald/60 rounded-xl flex items-start space-x-3 text-xs text-darktext-primary shadow-lg shadow-emerald-950/20"
         >
-          <CheckCircle2 className="w-5 h-5 text-emerald-600 flex-shrink-0 mt-0.5" />
+          <CheckCircle2 className="w-5 h-5 text-brand-emerald flex-shrink-0 mt-0.5" />
           <div className="space-y-1">
             <div className="flex flex-wrap items-center gap-2">
-              <span className="font-bold text-sm text-emerald-900">
+              <span className="font-bold text-sm text-darktext-primary">
                 Alternativa Adoptada por el Negocio:
               </span>
-              <span className="px-2.5 py-0.5 rounded-full font-mono font-bold bg-emerald-200 text-emerald-900 text-xs">
+              <span className="px-2.5 py-0.5 rounded-full font-mono font-bold bg-dark-elevated border border-brand-emerald/50 text-brand-emerald text-xs">
                 {alternativeDecision.selected_option}
               </span>
             </div>
             {alternativeDecision.rationale && (
-              <p className="text-emerald-800 text-xs mt-1">
-                <strong>Justificación registrada:</strong> {alternativeDecision.rationale}
+              <p className="text-darktext-secondary text-xs mt-1">
+                <strong className="text-darktext-primary">Justificación registrada:</strong> {alternativeDecision.rationale}
               </p>
             )}
-            <div className="text-[11px] text-emerald-700 pt-1">
-              Formalizado por: <strong>{alternativeDecision.decided_by || 'Responsable'}</strong>{' '}
+            <div className="text-[11px] text-darktext-secondary pt-1">
+              Formalizado por: <strong className="text-brand-emerald">{alternativeDecision.decided_by || 'Responsable'}</strong>{' '}
               {alternativeDecision.decided_at &&
                 `(${new Date(alternativeDecision.decided_at).toLocaleDateString()})`}
             </div>
@@ -198,79 +198,79 @@ export const AlternativesMatrix: React.FC<AlternativesMatrixProps> = ({
               data-testid={`alternative-card-${alt.id}`}
               className={`rounded-xl border p-5 flex flex-col justify-between space-y-4 transition-all text-xs ${
                 isAdopted
-                  ? 'bg-emerald-50/40 border-emerald-400 ring-2 ring-emerald-200 shadow-sm'
-                  : 'bg-white border-slate-200 hover:border-slate-300 shadow-xs'
+                  ? 'bg-dark-card border-brand-emerald ring-2 ring-brand-emerald/30 shadow-lg shadow-emerald-950/30'
+                  : 'bg-dark-card border-dark-border hover:border-dark-border/80 shadow-sm'
               }`}
             >
               <div className="space-y-3">
                 {/* Cabecera de la Alternativa */}
-                <div className="space-y-1 border-b border-slate-100 pb-2.5">
+                <div className="space-y-1 border-b border-dark-border/60 pb-2.5">
                   <div className="flex items-center justify-between gap-2">
-                    <span className="text-[10px] font-mono text-slate-400 font-bold uppercase truncate" title={alt.id}>
+                    <span className="text-[10px] font-mono text-darktext-secondary/70 font-bold uppercase truncate" title={alt.id}>
                       {alt.id}
                     </span>
                     {isAdopted ? (
-                      <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300 flex items-center space-x-1">
-                        <CheckCircle2 className="w-3 h-3 text-emerald-700" />
+                      <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-emerald-900/80 text-brand-emerald border border-emerald-600/50 flex items-center space-x-1">
+                        <CheckCircle2 className="w-3 h-3 text-brand-emerald" />
                         <span>Adoptada</span>
                       </span>
                     ) : (
-                      <span className="text-[10px] text-slate-400 italic">Propuesta</span>
+                      <span className="text-[10px] text-darktext-secondary/70 italic">Propuesta</span>
                     )}
                   </div>
-                  <h4 className="font-bold text-sm text-slate-900 leading-snug">{alt.name}</h4>
+                  <h4 className="font-bold text-sm text-darktext-primary leading-snug">{alt.name}</h4>
                 </div>
 
                 {/* Enfoque */}
                 <div>
-                  <span className="text-[11px] font-semibold text-slate-500 block mb-0.5 flex items-center space-x-1">
-                    <Layers className="w-3.5 h-3.5 text-slate-400" />
+                  <span className="text-[11px] font-semibold text-darktext-secondary block mb-0.5 flex items-center space-x-1">
+                    <Layers className="w-3.5 h-3.5 text-brand-emerald" />
                     <span>Enfoque Técnico</span>
                   </span>
-                  <p className="text-slate-700 leading-relaxed">{alt.approach}</p>
+                  <p className="text-darktext-primary leading-relaxed">{alt.approach}</p>
                 </div>
 
                 {/* Idoneidad */}
                 <div>
-                  <span className="text-[11px] font-semibold text-slate-500 block mb-0.5 flex items-center space-x-1">
-                    <AlertCircle className="w-3.5 h-3.5 text-slate-400" />
+                  <span className="text-[11px] font-semibold text-darktext-secondary block mb-0.5 flex items-center space-x-1">
+                    <AlertCircle className="w-3.5 h-3.5 text-brand-turquoise" />
                     <span>Adecuación al Contexto</span>
                   </span>
-                  <p className="text-slate-700 leading-relaxed bg-slate-50 p-2.5 rounded-lg border border-slate-100">
+                  <p className="text-darktext-primary leading-relaxed bg-dark-elevated p-2.5 rounded-lg border border-dark-border">
                     {alt.suitability}
                   </p>
                 </div>
 
                 {/* Requerimientos de Datos */}
                 <div>
-                  <span className="text-[11px] font-semibold text-slate-500 block mb-0.5 flex items-center space-x-1">
-                    <Database className="w-3.5 h-3.5 text-slate-400" />
+                  <span className="text-[11px] font-semibold text-darktext-secondary block mb-0.5 flex items-center space-x-1">
+                    <Database className="w-3.5 h-3.5 text-darktext-secondary" />
                     <span>Datos Requeridos</span>
                   </span>
-                  <p className="text-slate-600">{alt.data_requirements}</p>
+                  <p className="text-darktext-secondary">{alt.data_requirements}</p>
                 </div>
 
                 {/* Riesgos y Limitaciones */}
                 <div>
-                  <span className="text-[11px] font-semibold text-slate-500 block mb-0.5 flex items-center space-x-1">
-                    <ShieldAlert className="w-3.5 h-3.5 text-amber-500" />
+                  <span className="text-[11px] font-semibold text-darktext-secondary block mb-0.5 flex items-center space-x-1">
+                    <ShieldAlert className="w-3.5 h-3.5 text-brand-warning" />
                     <span>Riesgos y Limitaciones</span>
                   </span>
-                  <p className="text-slate-600 italic bg-amber-50/50 p-2.5 rounded-lg border border-amber-100">
+                  <p className="text-amber-200/90 italic bg-amber-950/20 p-2.5 rounded-lg border border-amber-800/30">
                     {alt.risks_and_limitations}
                   </p>
                 </div>
               </div>
 
               {/* Pie de Evaluación: Complejidad y Evidencia */}
-              <div className="pt-3 border-t border-slate-100 flex items-center justify-between">
+              <div className="pt-3 border-t border-dark-border/60 flex items-center justify-between">
                 <div>
-                  <span className="text-[10px] text-slate-400 block mb-0.5">Complejidad</span>
+                  <span className="text-[10px] text-darktext-secondary block mb-0.5">Complejidad</span>
                   {renderComplexityBadge(alt.estimated_complexity)}
                 </div>
                 <div className="text-right">
-                  <span className="text-[10px] text-slate-400 block mb-0.5 flex items-center justify-end space-x-1">
-                    <Award className="w-3 h-3 text-slate-400" />
+                  <span className="text-[10px] text-darktext-secondary block mb-0.5 flex items-center justify-end space-x-1">
+                    <Award className="w-3 h-3 text-brand-turquoise" />
                     <span>Sustento</span>
                   </span>
                   {renderEvidenceBadge(alt.empirical_evidence_level)}

@@ -20,7 +20,7 @@ from .services import (
     commit,
     create_artifact,
     record_audit,
-    require_project,
+    require_editable_project,
 )
 from .storage import ArtifactStore, ArtifactStoreError
 
@@ -54,7 +54,7 @@ class M2IngestionModule:
         if payload.status not in {"requested", "ready"}:
             raise ValidationError("M2 executions must start in requested or ready status")
 
-        project = require_project(db, project_id)
+        project = require_editable_project(db, project_id)
         context = db.get(ProjectContextSnapshot, payload.context_snapshot_id)
         if context is None or context.project_id != project.id:
             raise NotFoundError("Context snapshot not found for project")

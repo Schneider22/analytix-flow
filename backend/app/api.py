@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Generator
+from typing import Literal
 from uuid import uuid4
 
 from fastapi import APIRouter, Depends, FastAPI, Query, Request, status
@@ -40,7 +41,9 @@ from .schemas import (
     M7GovernanceRequest,
     M8DashboardInput,
     ProjectCreate,
+    ProjectArchiveRequest,
     ProjectRead,
+    ProjectRestoreRequest,
 )
 from .services import (
     ConflictError,
@@ -51,7 +54,10 @@ from .services import (
     create_context_snapshot,
     create_decision,
     create_project,
+    archive_project,
+    require_editable_project,
     require_project,
+    restore_project,
     resolve_approval,
 )
 from .storage import (
@@ -242,9 +248,10 @@ def create_app(settings: Settings | None = None, *, engine=None, session_factory
     def list_projects(
         limit: int = Query(default=100, ge=1, le=500),
         offset: int = Query(default=0, ge=0),
+        archived: Literal["exclude", "only", "include"] = Query(default="exclude"),
         db: Session = Depends(get_db),
     ):
-        return project_repository.list(db, limit=limit, offset=offset)
+        return project_repository.list(db, limit=limit, offset=offset, archived=archived)
 
     @router.get("/projects/{project_id}", response_model=ProjectRead)
     def get_project(project_id: str, db: Session = Depends(get_db)):
@@ -252,6 +259,28 @@ def create_app(settings: Settings | None = None, *, engine=None, session_factory
         if project is None:
             raise NotFoundError("Project not found")
         return project
+
+    @router.post("/projects/{project_id}/archive", response_model=ProjectRead)
+    def archive_project_endpoint(
+        project_id: str,
+        request: Request,
+        payload: ProjectArchiveRequest,
+        db: Session = Depends(get_db),
+    ):
+        return archive_project(
+            db, project_id, payload, correlation_id=request.state.correlation_id
+        )
+
+    @router.post("/projects/{project_id}/restore", response_model=ProjectRead)
+    def restore_project_endpoint(
+        project_id: str,
+        request: Request,
+        payload: ProjectRestoreRequest,
+        db: Session = Depends(get_db),
+    ):
+        return restore_project(
+            db, project_id, payload, correlation_id=request.state.correlation_id
+        )
 
     @router.post("/projects/{project_id}/context", response_model=ContextRead, status_code=status.HTTP_201_CREATED)
     def create_context_endpoint(
@@ -294,6 +323,8 @@ def create_app(settings: Settings | None = None, *, engine=None, session_factory
         source_execution_id: str | None = Query(default=None, max_length=128),
         db: Session = Depends(get_db),
     ):
+        # Check lifecycle state before writing bytes to the artifact store.
+        require_editable_project(db, project_id)
         content_length = request.headers.get("content-length")
         if content_length is not None:
             try:
