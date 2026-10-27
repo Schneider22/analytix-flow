@@ -1,8 +1,74 @@
 from __future__ import annotations
 
+import logging
 import os
 from dataclasses import dataclass
 from pathlib import Path
+
+try:
+    from dotenv import load_dotenv
+except ModuleNotFoundError:
+    load_dotenv = None
+
+logger = logging.getLogger("analytixflow.config")
+
+
+def _load_dotenv_if_present(env_path: Path | None = None) -> None:
+    """Load configuration from a local .env file if present.
+
+    Preserves existing environment variables (override=False).
+    Uses python-dotenv if available, falling back to a direct reader.
+    Errors during file access or parsing are surfaced explicitly
+    without logging sensitive connection strings or secrets.
+    """
+    if env_path is not None:
+        candidates = [env_path]
+    else:
+        explicit_file = os.getenv("ANALYTIXFLOW_ENV_FILE")
+        if explicit_file:
+            candidates = [Path(explicit_file)]
+        else:
+            candidates = [
+                Path.cwd() / ".env",
+                Path(__file__).resolve().parent.parent.parent / ".env",
+                Path(__file__).resolve().parent.parent.parent.parent / ".env",
+            ]
+
+    seen: set[Path] = set()
+    for candidate in candidates:
+        try:
+            resolved = candidate.resolve()
+        except OSError:
+            resolved = candidate
+        if resolved in seen:
+            continue
+        seen.add(resolved)
+        if not candidate.is_file():
+            continue
+
+        if load_dotenv is not None:
+            try:
+                load_dotenv(dotenv_path=candidate, override=False)
+                return
+            except (OSError, UnicodeDecodeError) as exc:
+                logger.warning("Failed to read environment file %s: %s", candidate.name, type(exc).__name__)
+                raise RuntimeError(f"Unable to read environment file at {candidate.name}: {type(exc).__name__}") from exc
+        else:
+            try:
+                with candidate.open("r", encoding="utf-8") as f:
+                    for line in f:
+                        line = line.strip()
+                        if not line or line.startswith("#") or "=" not in line:
+                            continue
+                        key, _, val = line.partition("=")
+                        key = key.strip()
+                        val = val.strip().strip("'\"")
+                        if key and key not in os.environ:
+                            os.environ[key] = val
+                return
+            except (OSError, UnicodeDecodeError) as exc:
+                logger.warning("Failed to read environment file %s: %s", candidate.name, type(exc).__name__)
+                raise RuntimeError(f"Unable to read environment file at {candidate.name}: {type(exc).__name__}") from exc
 
 
 @dataclass(frozen=True)
@@ -22,7 +88,9 @@ class Settings:
     max_correlation_id_length: int = 128
 
     @classmethod
-    def from_env(cls) -> "Settings":
+    def from_env(cls, *, env_file: Path | None = None, load_env: bool = True) -> "Settings":
+        if load_env:
+            _load_dotenv_if_present(env_file)
         app_env = os.getenv("APP_ENV", "development").strip().lower()
         database_url = os.getenv("DATABASE_URL")
         if not database_url:

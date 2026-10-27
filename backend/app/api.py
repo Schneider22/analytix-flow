@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from collections.abc import Generator
 from typing import Literal
 from uuid import uuid4
@@ -69,6 +70,8 @@ from .storage import (
 )
 from .orchestrator import ProjectOrchestrator
 
+
+logger = logging.getLogger("analytixflow.api")
 
 project_repository = ProjectRepository()
 artifact_repository = ArtifactRepository()
@@ -225,11 +228,13 @@ def create_app(settings: Settings | None = None, *, engine=None, session_factory
         return JSONResponse(status_code=422, content={"detail": str(exc)})
 
     @app.exception_handler(SQLAlchemyError)
-    async def database_handler(_request: Request, _exc: SQLAlchemyError):
+    async def database_handler(_request: Request, exc: SQLAlchemyError):
+        logger.exception("Database persistence error encountered: %s", exc)
         return JSONResponse(status_code=503, content={"detail": "Persistence service unavailable"})
 
     @app.exception_handler(Exception)
-    async def unexpected_handler(_request: Request, _exc: Exception):
+    async def unexpected_handler(_request: Request, exc: Exception):
+        logger.exception("Unhandled server error encountered: %s", exc)
         return JSONResponse(status_code=500, content={"detail": "Internal server error"})
 
     @router.get("/health", response_model=HealthRead)

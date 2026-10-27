@@ -8,6 +8,7 @@ import { ContextTimeline } from './ContextTimeline';
 import { DecisionList } from './DecisionList';
 import { AlternativesMatrix } from './AlternativesMatrix';
 import { AuditTrailView } from './AuditTrailView';
+import { IngestionPanel } from './IngestionPanel';
 import { ProjectLifecycleAction, ProjectLifecycleModal } from './ProjectLifecycleModal';
 import {
   ArrowLeft,
@@ -20,6 +21,7 @@ import {
   FileText,
   Shield,
   Layers,
+  Database,
   Sparkles,
   Calendar,
   User,
@@ -53,7 +55,7 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({ projectId, onBack 
   }, []);
 
   // Pestaña Activa: 'general' | 'context' | 'decisions' | 'alternatives' | 'audit'
-  const [activeTab, setActiveTab] = useState<'general' | 'context' | 'decisions' | 'alternatives' | 'audit'>(
+  const [activeTab, setActiveTab] = useState<'general' | 'ingestion' | 'context' | 'decisions' | 'alternatives' | 'audit'>(
     'general'
   );
 
@@ -401,6 +403,19 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({ projectId, onBack 
 
           <button
             type="button"
+            onClick={() => setActiveTab('ingestion')}
+            className={`inline-flex items-center space-x-2 py-3 px-1 border-b-2 font-medium text-xs transition-colors ${
+              activeTab === 'ingestion'
+                ? 'border-brand-emerald text-brand-emerald font-semibold'
+                : 'border-transparent text-darktext-secondary hover:text-darktext-primary hover:border-dark-border'
+            }`}
+          >
+            <Database className="w-4 h-4" />
+            <span>Ingesta Bronze</span>
+          </button>
+
+          <button
+            type="button"
             onClick={() => setActiveTab('decisions')}
             className={`inline-flex items-center space-x-2 py-3 px-1 border-b-2 font-medium text-xs transition-colors ${
               activeTab === 'decisions'
@@ -612,6 +627,12 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({ projectId, onBack 
               </div>
             </div>
           </div>
+        </div>
+      )}
+
+      {activeTab === 'ingestion' && (
+        <div className="animate-in fade-in duration-150">
+          <IngestionPanel project={project} snapshots={snapshots} decisions={decisions} />
         </div>
       )}
 
